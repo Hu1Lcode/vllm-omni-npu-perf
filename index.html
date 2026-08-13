@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>vLLM-Omni × Ascend NPU 模型画廊</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">⚡</span>
+        <span class="brand-text">vLLM-Omni <em>× Ascend NPU</em></span>
+      </a>
+      <nav class="site-nav">
+        <a href="#models">模型列表</a>
+        <a href="#features">特性清单</a>
+        <a href="https://docs.vllm.com.cn/projects/vllm-omni/en/latest/" target="_blank" rel="noopener">官方文档</a>
+        <a href="https://recipes.vllm.ai/" target="_blank" rel="noopener">recipes.vllm.ai</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <h1>vLLM-Omni <span class="grad">昇腾 NPU</span> 模型画廊</h1>
+      <p class="hero-sub">
+        在昇腾 NPU 上使用 vLLM-Omni 部署推理服务的支持模型一览：模型简介 · 架构图 · 部署推理脚本 · 性能数据
+      </p>
+      <div class="hero-stats" id="heroStats"></div>
+    </div>
+  </section>
+
+  <main class="container" id="models">
+    <div class="filters" id="filters"></div>
+    <div id="seriesList"></div>
+
+    <section class="site-section" id="features">
+      <div class="site-section-head">
+        <h2>vLLM-Omni 特性清单</h2>
+        <a class="head-link" href="https://docs.vllm.com.cn/projects/vllm-omni/en/latest/features/" target="_blank" rel="noopener">功能总览 ↗</a>
+      </div>
+      <div class="feature-grid" id="featuresSection"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>
+        参考：
+        <a href="https://docs.vllm.com.cn/projects/vllm-omni/en/latest/" target="_blank" rel="noopener">vLLM-Omni 文档</a> ·
+        <a href="https://recipes.vllm.ai/" target="_blank" rel="noopener">recipes.vllm.ai</a>
+      </p>
+      <p class="muted">NPU 支持状态依据官方支持矩阵标注；性能数据为占位，待填入实测结果。</p>
+    </div>
+  </footer>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
