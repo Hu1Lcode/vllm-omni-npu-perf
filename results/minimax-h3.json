@@ -12,6 +12,7 @@
     "resolution": "1344x768",
     "frames": 124,
     "duration": "5",
+    "fps": "24",
     "steps": 50,
     "deploy": "4× NPU，t2va",
     "form": {

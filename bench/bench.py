@@ -200,6 +200,7 @@ def main():
     ap.add_argument("--resolution", default="", help="分辨率，如 1344x768")
     ap.add_argument("--frames", type=int, default=None, help="帧数（计算每帧时间用）")
     ap.add_argument("--duration", default="", help="时长（如 8.7s）")
+    ap.add_argument("--fps", default="", help="帧率（fps），回填到「帧率 (fps)」列")
     ap.add_argument("--steps", type=int, default=None, help="推理步数")
     ap.add_argument("--machine", default="", help="机型，如 Atlas 800I A3")
     ap.add_argument("--framework", default="", help="框架版本，如 vllm-omni v0.25.0 / CANN 9.0.1")
@@ -298,6 +299,7 @@ def main():
                 "resolution": args.resolution,
                 "frames": args.frames,
                 "duration": args.duration,
+                "fps": args.fps,
                 "steps": args.steps,
                 "deploy": args.deploy,
                 "form": form_fields,

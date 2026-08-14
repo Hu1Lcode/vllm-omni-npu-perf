@@ -39,7 +39,7 @@ python3 bench/bench.py \
   --form 'width=1344' --form 'height=768' --form 'fps=24' \
   --form 'num_inference_steps=50' --form 'flow_shift=12' --form 'seed=1101' \
   --form 'extra_params={"task":"fl2va","duration":8.7}' \
-  --resolution 1344x768 --frames 209 --duration 8.7 --steps 50 \
+  --resolution 1344x768 --frames 209 --duration 8.7 --fps 24 --steps 50 \
   --machine 'Atlas 800I A3' --framework 'vllm-omni <commit> / CANN 9.0.1' \
   --deploy '4× NPU，FL2VA' \
   --out results/minimax-h3.json

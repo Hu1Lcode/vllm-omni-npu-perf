@@ -82,6 +82,7 @@ def row_from_result(result, columns):
         "分辨率": c.get("resolution", ""),
         "帧数 / 时长": (f"{frames} 帧 / {c['duration']}s" if frames and c.get("duration")
                         else (f"{frames} 帧" if frames else "")),
+        "帧率 (fps)": c.get("fps", ""),
         "推理步数": c.get("steps", ""),
         "层数": c.get("layers", ""),
         "机型": e.get("machine", ""),
