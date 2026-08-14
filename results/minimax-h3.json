@@ -4,7 +4,7 @@
   "method": "预热 1 次（丢弃）+ 正式 3 次，取服务端日志 e2e_total_ms 平均值",
   "env": {
     "machine": "Ascend910（64GB HBM/卡）",
-    "framework": "vllm-omni v0.26.0 / CANN 9.0.1"
+    "framework": "vllm-omni v0.26.0"
   },
   "config": {
     "endpoint": "http://127.0.0.1:8000/v1/videos/sync",

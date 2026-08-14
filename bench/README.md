@@ -77,12 +77,12 @@ python3 bench/fill_results.py results/minimax-h3.json             # 写回 data.
 python3 bench/fill_results.py                                     # 回填 results/ 下全部
 ```
 
-行内容按每个模型 `perf.columns` 的列序自动映射：分辨率 / 帧数 / 步数 / 机型 / 框架版本 / 部署配置 / 端到端时间 / 每帧时间（或单张耗时）/ 备注（自动注明"预热 1 次 + N 次平均（服务端 e2e_total_ms）"）。
+行内容按每个模型 `perf.columns` 的列序自动映射：分辨率 / 帧数 / 帧率 / 步数 / 机型 / 框架版本 / 端到端时间 / 每帧时间（或单张耗时）。
 
 ## 注意事项
 
 - 视频生成一次动辄几分钟，3 次 + 预热 1 次单模型约 15~40 分钟，请合理安排压测时段；
 - 附加模式压测会给正在服务的实例带来真实负载，执行前确认不影响在跑的业务；
 - 建议固定 `seed`，同一配置可复现；
-- 结果 JSON 中务必填准 `--machine / --framework / --deploy / --resolution / --frames / --steps`，这些直接进网站表格；
+- 结果 JSON 中务必填准 `--machine / --framework / --resolution / --frames / --fps / --steps`，这些直接进网站表格（`--framework` 只标 vllm-omni 版本；`--deploy`、`--note` 仅留在结果 JSON 备查，不进表格）；
 - 若需 stage 级耗时分析，可再写脚本解析日志中的 `[OmniTiming] ... stages=[...]` 行（本工具暂只取 e2e_total_ms）。

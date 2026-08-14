@@ -73,10 +73,6 @@ def row_from_result(result, columns):
     avg_s = avg_ms / 1000.0
     frames = c.get("frames")
     per_frame = round(avg_ms / frames, 1) if frames else None
-    note = result.get("note") or ""
-    if note:
-        note += "；"
-    note += f"预热 1 次 + {len(result['runs'])} 次平均（服务端 e2e_total_ms）"
 
     values = {
         "分辨率": c.get("resolution", ""),
@@ -87,12 +83,10 @@ def row_from_result(result, columns):
         "层数": c.get("layers", ""),
         "机型": e.get("machine", ""),
         "框架版本": e.get("framework", ""),
-        "部署配置": c.get("deploy", ""),
         "端到端时间 (s)": f"{avg_s:.2f}",
         "每帧时间 (ms)": f"{per_frame:.1f}" if per_frame is not None else "",
         "单张耗时 (s)": f"{avg_s:.2f}",
         "吞吐 (张/s)": c.get("throughput", ""),
-        "备注": note,
     }
     return [js_string(values.get(col, "")) for col in columns]
 
