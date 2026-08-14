@@ -2,14 +2,19 @@
 
 展示 **vLLM-Omni 在昇腾 NPU 上支持**的模型：主页为按系列分组的模型卡片墙 + **vLLM-Omni 特性清单**（7 大类 33 项，链接到官方文档），点击模型名进入详情页，详情页包含 **模型简介 → 架构图 → 部署推理脚本 → 性能数据** 四个板块。
 
-当前收录 4 个系列、13 个模型：
+当前收录 9 个系列、24 个模型：
 
 | 系列 | 模型 | NPU 支持 |
 | --- | --- | --- |
+| Wan 2.1 | Wan2.1-T2V-1.3B / T2V-14B / VACE-1.3B / VACE-14B | ✓ |
 | Wan 2.2 | Wan2.2-T2V-A14B / I2V-A14B / TI2V-5B / S2V-14B | ✓ |
 | MiniMax H3 | MiniMax-H3（视频 + 立体声音频） | ✓ 社区验证（Atlas 800I A3） |
 | Qwen-Image | Image / 2512 / Edit / Edit-2509 / Edit-2511 / Layered | Edit 系列 ✓，Image 基础版与 2512 ✗ |
 | Z-Image | Z-Image / Z-Image-Turbo | Turbo ✓，基础版待验证 |
+| LTX | LTX-2.3（视频 + 同步音频） | ✗（矩阵未列入 NPU） |
+| LingBot-Video | Dense-1.3B / MoE-30B-A3B | ✗（矩阵未列入 NPU，仅 NVIDIA） |
+| LongCat-Image | LongCat-Image / LongCat-Image-Edit | ✓ |
+| HunyuanVideo | HunyuanVideo-1.5 T2V / I2V（480p / 720p） | ✗（矩阵未列入 NPU） |
 
 ## 目录结构
 

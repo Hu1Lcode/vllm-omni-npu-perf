@@ -8,6 +8,214 @@
  * ============================================================ */
 
 window.MODELS = [
+  /* ─────────────────────────── Wan 2.1 系列 ─────────────────────────── */
+  {
+    id: "wan21-t2v-1.3b",
+    name: "Wan2.1-T2V-1.3B",
+    series: "wan21",
+    seriesName: "Wan 2.1 系列",
+    org: "Wan-AI",
+    tasks: ["文生视频"],
+    params: "1.3B（稠密）",
+    hfRepo: "Wan-AI/Wan2.1-T2V-1.3B-Diffusers",
+    npu: true,
+    npuNote: "",
+    summary: "Wan 2.1 轻量文生视频模型，低显存友好",
+    intro: `
+      <p>Wan 2.1 是阿里万相团队发布的视频生成基础模型。<strong>Wan2.1-T2V-1.3B</strong> 是其轻量文生视频版本：1.3B 稠密 DiT，支持中英文提示词，显存占用低，适合资源受限场景与快速验证。</p>
+      <p>官方支持矩阵标注其在昇腾 NPU 上<strong>支持</strong>（与 Wan2.2-T2V 共用 WanPipeline 入口）。</p>
+    `,
+    arch: {
+      text: `
+        <p>3D 因果视频 VAE + T2V 文本编码器 + DiT 主干，采用 Flow Matching 调度（flow_shift）。</p>
+        <p>数据流：文本提示词 → 文本编码器 → DiT 去噪 → VAE 解码 → 视频帧。</p>
+      `,
+    },
+    serve: [
+      {
+        title: "部署推理服务 · vllm serve",
+        lang: "bash",
+        code: `# 基础启动
+vllm serve Wan-AI/Wan2.1-T2V-1.3B-Diffusers --omni --port 8091
+
+# VAE 并行示例（官方 VAE 并行文档）
+vllm serve Wan-AI/Wan2.1-T2V-1.3B-Diffusers --omni \\
+  --tensor-parallel-size 2 \\
+  --vae-patch-parallel-size 2 \\
+  --vae-parallel-mode spatial_shard_width`,
+        note: "官方在线服务示例页的完整命令以 Wan2.2 为例，Wan2.1 使用同一 WanPipeline 入口；参数以官方文档为准。",
+      },
+      {
+        title: "客户端调用 · /v1/videos（异步任务）",
+        lang: "bash",
+        code: `curl -X POST http://localhost:8091/v1/videos \\
+  -F "prompt=A cinematic view of a futuristic city at sunset" \\
+  -F "width=832" -F "height=480" -F "num_frames=33" -F "fps=16" \\
+  -F "negative_prompt=low quality, blurry, static" \\
+  -F "num_inference_steps=40" -F "guidance_scale=5.0" \\
+  -F "flow_shift=5.0" -F "seed=42"
+
+# 创建后轮询 GET /v1/videos/{id} 至 completed，再下载
+#   curl -L http://localhost:8091/v1/videos/{id}/content -o out.mp4`,
+      },
+    ],
+    perf: {
+      columns: ["分辨率", "帧数 / 时长", "推理步数", "机型", "框架版本", "部署配置", "端到端时间 (s)", "每帧时间 (ms)", "备注"],
+      rows: [],
+    },
+    refs: [
+      { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
+      { label: "vLLM-Omni 文档 · 文生视频在线推理", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/user_guide/examples/online_serving/text_to_video/" },
+      { label: "vLLM-Omni 文档 · VAE 并行", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/user_guide/diffusion/parallelism/vae_parallelism/" },
+    ],
+  },
+  {
+    id: "wan21-t2v-14b",
+    name: "Wan2.1-T2V-14B",
+    series: "wan21",
+    seriesName: "Wan 2.1 系列",
+    org: "Wan-AI",
+    tasks: ["文生视频"],
+    params: "14B（稠密）",
+    hfRepo: "Wan-AI/Wan2.1-T2V-14B-Diffusers",
+    npu: true,
+    npuNote: "",
+    summary: "Wan 2.1 旗舰文生视频模型",
+    intro: `
+      <p><strong>Wan2.1-T2V-14B</strong> 是 Wan 2.1 的旗舰文生视频版本：14B 稠密 DiT，支持中英文提示词，生成 480P/720P 高质量视频。</p>
+      <p>官方支持矩阵标注其在昇腾 NPU 上<strong>支持</strong>（与 Wan2.2-T2V 共用 WanPipeline 入口）。</p>
+    `,
+    arch: {
+      text: `
+        <p>3D 因果视频 VAE + T2V 文本编码器 + DiT 主干，Flow Matching 调度（flow_shift）。</p>
+        <p>数据流：文本提示词 → 文本编码器 → DiT 去噪 → VAE 解码 → 视频帧。</p>
+      `,
+    },
+    serve: [
+      {
+        title: "部署推理服务 · vllm serve",
+        lang: "bash",
+        code: `# 基础启动
+vllm serve Wan-AI/Wan2.1-T2V-14B-Diffusers --omni --port 8091
+
+# 显存受限时可追加逐层卸载
+#   --enable-layerwise-offload`,
+        note: "官方在线服务示例页的完整命令以 Wan2.2 为例，Wan2.1 使用同一 WanPipeline 入口；参数以官方文档为准。",
+      },
+      {
+        title: "客户端调用 · /v1/videos（异步任务）",
+        lang: "bash",
+        code: `curl -X POST http://localhost:8091/v1/videos \\
+  -F "prompt=A cinematic view of a futuristic city at sunset" \\
+  -F "width=832" -F "height=480" -F "num_frames=33" -F "fps=16" \\
+  -F "negative_prompt=low quality, blurry, static" \\
+  -F "num_inference_steps=40" -F "guidance_scale=5.0" \\
+  -F "flow_shift=5.0" -F "seed=42"
+
+# 创建后轮询 GET /v1/videos/{id} 至 completed，再下载
+#   curl -L http://localhost:8091/v1/videos/{id}/content -o out.mp4`,
+      },
+    ],
+    perf: {
+      columns: ["分辨率", "帧数 / 时长", "推理步数", "机型", "框架版本", "部署配置", "端到端时间 (s)", "每帧时间 (ms)", "备注"],
+      rows: [],
+    },
+    refs: [
+      { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
+      { label: "vLLM-Omni 文档 · 文生视频在线推理", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/user_guide/examples/online_serving/text_to_video/" },
+    ],
+  },
+  {
+    id: "wan21-vace-1.3b",
+    name: "Wan2.1-VACE-1.3B",
+    series: "wan21",
+    seriesName: "Wan 2.1 系列",
+    org: "Wan-AI",
+    tasks: ["文生视频", "图生视频"],
+    params: "1.3B",
+    hfRepo: "Wan-AI/Wan2.1-VACE-1.3B-diffusers",
+    npu: true,
+    npuNote: "",
+    summary: "视频生成与编辑一体模型（V2LF / FLF2V / Inpainting / R2V）",
+    intro: `
+      <p><strong>Wan2.1-VACE</strong>（Video All-in-one Creation and Editing）是 Wan 2.1 的统一视频生成与编辑模型：在单一生主干上支持文生视频（T2V）、图生视频（I2V）、视频生尾帧（V2LF）、首尾帧生视频（FLF2V）、视频补绘（Inpainting）与参考生视频（R2V）等任务。</p>
+      <p>官方支持矩阵标注其在昇腾 NPU 上<strong>支持</strong>。1.3B 版本在 RTX 5090 上验证：81 帧 T2V 峰值显存约 20 GiB（含 VAE tiling）。</p>
+    `,
+    arch: {
+      text: `
+        <p>在 Wan2.1 DiT 主干（3D 因果 VAE + 文本编码器 + Flow Matching）上引入视频条件与多任务能力，一个权重覆盖生成与编辑全任务。</p>
+        <p>数据流：文本/参考视频（首尾帧）/参考图 → VAE 编码 → DiT → VAE 解码 → 目标视频。</p>
+      `,
+    },
+    serve: [
+      {
+        title: "离线推理示例（官方 recipe）",
+        lang: "bash",
+        code: `python examples/offline_inference/text_to_video/text_to_video.py \\
+  --model Wan-AI/Wan2.1-VACE-1.3B-diffusers \\
+  --prompt "A sleek, humanoid robot stands in a vast warehouse filled with neatly stacked cardboard boxes." \\
+  --seed 0 \\
+  --height 480 --width 832 --num-frames 81 --num-inference-steps 30 \\
+  --guidance-scale 5.0 --flow-shift 5.0 --vae-use-tiling \\
+  --output t2v.mp4`,
+        note: "官方 recipe 未提供专用 serve 命令；在线服务使用标准 --omni 入口（vllm serve Wan-AI/Wan2.1-VACE-1.3B-diffusers --omni）。",
+      },
+    ],
+    perf: {
+      columns: ["分辨率", "帧数 / 时长", "推理步数", "机型", "框架版本", "部署配置", "端到端时间 (s)", "每帧时间 (ms)", "备注"],
+      rows: [],
+    },
+    refs: [
+      { label: "官方 recipe · Wan2.1-VACE", url: "https://github.com/vllm-project/vllm-omni/blob/main/recipes/Wan-AI/Wan2.1-VACE.md" },
+      { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
+    ],
+  },
+  {
+    id: "wan21-vace-14b",
+    name: "Wan2.1-VACE-14B",
+    series: "wan21",
+    seriesName: "Wan 2.1 系列",
+    org: "Wan-AI",
+    tasks: ["文生视频", "图生视频"],
+    params: "14B",
+    hfRepo: "Wan-AI/Wan2.1-VACE-14B-diffusers",
+    npu: true,
+    npuNote: "",
+    summary: "视频生成与编辑一体模型（14B 旗舰）",
+    intro: `
+      <p><strong>Wan2.1-VACE-14B</strong> 是 VACE 的 14B 版本：统一支持文生视频（T2V）、图生视频（I2V）、视频生尾帧（V2LF）、首尾帧生视频（FLF2V）、视频补绘（Inpainting）与参考生视频（R2V）。</p>
+      <p>官方支持矩阵标注其在昇腾 NPU 上<strong>支持</strong>。14B 权重约需 70 GiB 磁盘空间，官方在单卡 48 GiB L40S 上以 VAE tiling + 逐层卸载验证。</p>
+    `,
+    arch: {
+      text: `
+        <p>与 VACE-1.3B 相同的多任务架构：Wan2.1 DiT 主干（3D 因果 VAE + 文本编码器 + Flow Matching）+ 视频条件与多任务能力。</p>
+        <p>数据流：文本/参考视频（首尾帧）/参考图 → VAE 编码 → DiT → VAE 解码 → 目标视频。</p>
+      `,
+    },
+    serve: [
+      {
+        title: "离线推理示例（官方 recipe）",
+        lang: "bash",
+        code: `python examples/offline_inference/text_to_video/text_to_video.py \\
+  --model Wan-AI/Wan2.1-VACE-14B-diffusers \\
+  --prompt "A sleek, humanoid robot stands in a vast warehouse filled with neatly stacked cardboard boxes." \\
+  --seed 0 \\
+  --height 480 --width 832 --num-frames 81 --num-inference-steps 30 \\
+  --guidance-scale 5.0 --flow-shift 5.0 --vae-use-tiling --enable-layerwise-offload \\
+  --output t2v.mp4`,
+        note: "官方 recipe 未提供专用 serve 命令；在线服务使用标准 --omni 入口（vllm serve Wan-AI/Wan2.1-VACE-14B-diffusers --omni）。",
+      },
+    ],
+    perf: {
+      columns: ["分辨率", "帧数 / 时长", "推理步数", "机型", "框架版本", "部署配置", "端到端时间 (s)", "每帧时间 (ms)", "备注"],
+      rows: [],
+    },
+    refs: [
+      { label: "官方 recipe · Wan2.1-VACE", url: "https://github.com/vllm-project/vllm-omni/blob/main/recipes/Wan-AI/Wan2.1-VACE.md" },
+      { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
+    ],
+  },
+
   /* ─────────────────────────── Wan 2.2 系列 ─────────────────────────── */
   {
     id: "wan22-t2v-a14b",
@@ -723,6 +931,433 @@ curl -sS -X POST "\${API_URL}" \\
     refs: [
       { label: "vLLM-Omni 文档 · 图像生成 API", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/serving/image_generation_api/" },
       { label: "vLLM-Omni 文档 · 快速开始", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/getting_started/quickstart/" },
+      { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
+    ],
+  },
+
+  /* ─────────────────────────── LTX 系列 ─────────────────────────── */
+  {
+    id: "ltx-2.3",
+    name: "LTX-2.3",
+    series: "ltx",
+    seriesName: "LTX 系列",
+    org: "Lightricks",
+    tasks: ["文生视频", "图生视频", "视频+音频"],
+    params: "22B（MoE Transformer，含音频）",
+    hfRepo: "diffusers/LTX-2.3-Diffusers",
+    npu: false,
+    npuNote: "官方矩阵未列入 NPU",
+    summary: "文生/图生视频 + 同步音频（one-stage / 两阶段 / 蒸馏）",
+    intro: `
+      <p><strong>LTX-2.3</strong> 是 Lightricks 发布的视频生成模型：同时支持文生视频与图生视频，并生成<strong>同步音频</strong>。提供三种管线：one-stage、两阶段（含 LoRA 上采样）、全蒸馏两阶段。</p>
+      <p><strong>注意：</strong>官方支持矩阵仅标注 NVIDIA GPU 与 AMD GPU，<strong>暂未列入 NPU</strong>。默认 768×512、121 帧 @ 24 FPS，LTX-2.3 默认 30 步，视频 CFG 3.0 / 音频 CFG 7.0。</p>
+    `,
+    arch: {
+      text: `
+        <p>22B MoE Transformer + Gemma 文本编码器 + 视频 VAE + 音频 VAE + Vocoder：视频与音频同步生成；支持 STG 与跨模态引导。</p>
+        <p>数据流：文本（+ 可选参考图）→ 文本编码器 → Transformer 去噪 → 视频 VAE 解码 + 音频 Vocoder → 音画同步视频。</p>
+      `,
+    },
+    serve: [
+      {
+        title: "部署推理服务 · vllm serve",
+        lang: "bash",
+        code: `# one-stage 文生/图生视频（含同步音频）
+vllm serve diffusers/LTX-2.3-Diffusers --omni --stage-init-timeout 600
+
+# 两阶段（普通，含上采样器）
+vllm serve diffusers/LTX-2.3-Diffusers --omni \\
+  --model-class-name LTX2TwoStagePipeline \\
+  --enable-layerwise-offload \\
+  --stage-init-timeout 600
+
+# 两阶段（全蒸馏）
+vllm serve diffusers/LTX-2.3-Distilled-Diffusers --omni \\
+  --model-class-name LTX2DistilledPipeline --stage-init-timeout 600
+
+# CFG 并行（2 卡）
+vllm serve diffusers/LTX-2.3-Diffusers --omni \\
+  --cfg-parallel-size 2 --stage-init-timeout 600`,
+        note: "建议 96GB 级 GPU，或使用 CPU/逐层卸载；num_frames 需为 8k+1，两阶段管线尺寸需被 64 整除。官方矩阵未列入 NPU。",
+      },
+      {
+        title: "客户端调用 · /v1/videos/sync（文生视频）",
+        lang: "bash",
+        code: `curl -X POST http://localhost:8000/v1/videos/sync \\
+  -F "prompt=A cinematic close-up of ocean waves at golden hour." \\
+  -F "negative_prompt=worst quality, inconsistent motion, blurry, jittery, distorted" \\
+  -F "size=768x512" \\
+  -F "num_frames=121" \\
+  -F "fps=24" \\
+  -F "seed=42" \\
+  -o ltx_t2v.mp4
+
+# 图生视频追加一行（与 URL 形式 image_reference 二选一）
+#   -F "input_reference=@/absolute/path/to/reference.png"`,
+      },
+    ],
+    perf: {
+      columns: ["分辨率", "帧数 / 时长", "推理步数", "机型", "框架版本", "部署配置", "端到端时间 (s)", "每帧时间 (ms)", "备注"],
+      rows: [],
+    },
+    refs: [
+      { label: "官方 recipe · LTX-2", url: "https://github.com/vllm-project/vllm-omni/blob/main/recipes/LTX/LTX-2.md" },
+      { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
+    ],
+  },
+
+  /* ─────────────────────────── LingBot-Video 系列 ─────────────────────────── */
+  {
+    id: "lingbot-video-dense",
+    name: "LingBot-Video-Dense-1.3B",
+    series: "lingbot",
+    seriesName: "LingBot-Video 系列",
+    org: "Robbyant",
+    tasks: ["文生图", "文生视频", "图生视频"],
+    params: "1.3B（稠密 DiT）",
+    hfRepo: "robbyant/lingbot-video-dense-1.3b",
+    npu: false,
+    npuNote: "官方矩阵未列入 NPU",
+    summary: "统一 T2I / T2V / TI2V 的稠密 DiT",
+    intro: `
+      <p><strong>LingBot-Video</strong> 是 Robbyant 开源的统一视觉生成模型：同一权重支持文生图（T2I）、文生视频（T2V）与图文生视频（TI2V）。<strong>Dense-1.3B</strong> 为稠密 DiT 版本。</p>
+      <p><strong>注意：</strong>官方 recipe 仅验证 CUDA 单卡路径，支持矩阵仅标注 NVIDIA GPU，<strong>暂未列入 NPU</strong>。</p>
+    `,
+    arch: {
+      text: `
+        <p>稠密 DiT 块 + Qwen3-VL 文本编码器 + Wan 因果 VAE（帧数按 4n+1 取整）+ 共享 FlowUniPC 调度器。</p>
+        <p>数据流：文本（+ 可选参考图）→ Qwen3-VL 编码 → DiT → Wan VAE 解码 → 图像 / 视频。</p>
+      `,
+    },
+    serve: [
+      {
+        title: "部署推理服务 · vllm serve",
+        lang: "bash",
+        code: `CUDA_VISIBLE_DEVICES=0 \\
+vllm serve robbyant/lingbot-video-dense-1.3b \\
+  --omni \\
+  --model-class-name LingBotVideoPipeline \\
+  --default-sampling-params \\
+  '{"0":{"num_frames":81,"num_inference_steps":40,"guidance_scale":6.0}}' \\
+  --port 8091`,
+        note: "官方 recipe 仅验证 CUDA 单卡路径；多卡并行、Cache-DiT、量化、CPU 卸载未验证。官方矩阵未列入 NPU。",
+      },
+      {
+        title: "客户端调用 · /v1/videos（异步任务）",
+        lang: "bash",
+        code: `create_response=$(curl -s http://localhost:8091/v1/videos \\
+  -F "model=robbyant/lingbot-video-dense-1.3b" \\
+  -F "prompt=a robotic arm picks up a red block" \\
+  -F "width=320" -F "height=192" -F "num_frames=9" -F "fps=24" \\
+  -F "num_inference_steps=2" -F "guidance_scale=3.0" -F "flow_shift=3.0" \\
+  -F "seed=42")
+video_id=$(echo "$create_response" | jq -r '.id')
+curl -L "http://localhost:8091/v1/videos/\${video_id}/content" -o lingbot_t2v.mp4
+
+# 另支持 T2I（/v1/images 路由）与 TI2V（追加 input_reference 参考图）`,
+      },
+    ],
+    perf: {
+      columns: ["分辨率", "帧数 / 时长", "推理步数", "机型", "框架版本", "部署配置", "端到端时间 (s)", "每帧时间 (ms)", "备注"],
+      rows: [],
+    },
+    refs: [
+      { label: "官方 recipe · LingBot-Video", url: "https://github.com/vllm-project/vllm-omni/blob/main/recipes/Robbyant/LingBot-Video.md" },
+      { label: "在线服务示例 · lingbot_video", url: "https://github.com/vllm-project/vllm-omni/tree/main/examples/online_serving/lingbot_video" },
+      { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
+    ],
+  },
+  {
+    id: "lingbot-video-moe",
+    name: "LingBot-Video-MoE-30B-A3B",
+    series: "lingbot",
+    seriesName: "LingBot-Video 系列",
+    org: "Robbyant",
+    tasks: ["文生图", "文生视频", "图生视频"],
+    params: "30B（A3B 路由 MoE，3B 激活）",
+    hfRepo: "robbyant/lingbot-video-moe-30b-a3b",
+    npu: false,
+    npuNote: "官方矩阵未列入 NPU",
+    summary: "统一 T2I / T2V / TI2V 的路由 MoE",
+    intro: `
+      <p><strong>LingBot-Video-MoE-30B-A3B</strong> 是 LingBot-Video 的路由 MoE 版本：总参数 30B、单 token 激活 3B，同样统一支持 T2I / T2V / TI2V。</p>
+      <p><strong>注意：</strong>官方 recipe 仅验证 CUDA 单卡 BF16 路径（峰值约 70 GiB 显存），支持矩阵仅标注 NVIDIA GPU，<strong>暂未列入 NPU</strong>。</p>
+    `,
+    arch: {
+      text: `
+        <p>路由 MoE DiT 块（3B 激活）+ Qwen3-VL 文本编码器 + Wan 因果 VAE（帧数按 4n+1 取整）+ 共享 FlowUniPC 调度器。</p>
+        <p>数据流：文本（+ 可选参考图）→ Qwen3-VL 编码 → MoE DiT → Wan VAE 解码 → 图像 / 视频。</p>
+      `,
+    },
+    serve: [
+      {
+        title: "部署推理服务 · vllm serve",
+        lang: "bash",
+        code: `CUDA_VISIBLE_DEVICES=0 \\
+vllm serve robbyant/lingbot-video-moe-30b-a3b \\
+  --omni \\
+  --model-class-name LingBotVideoPipeline \\
+  --default-sampling-params \\
+  '{"0":{"num_frames":81,"num_inference_steps":40,"guidance_scale":6.0}}' \\
+  --port 8091`,
+        note: "MoE checkpoint 峰值约 67.7 GiB 显存，建议 ≥70 GiB 显存的 GPU。官方矩阵未列入 NPU。",
+      },
+      {
+        title: "客户端调用 · /v1/videos（异步任务）",
+        lang: "bash",
+        code: `create_response=$(curl -s http://localhost:8091/v1/videos \\
+  -F "model=robbyant/lingbot-video-moe-30b-a3b" \\
+  -F "prompt=a robotic arm picks up a red block" \\
+  -F "width=320" -F "height=192" -F "num_frames=9" -F "fps=24" \\
+  -F "num_inference_steps=2" -F "guidance_scale=3.0" -F "flow_shift=3.0" \\
+  -F "seed=42")
+video_id=$(echo "$create_response" | jq -r '.id')
+curl -L "http://localhost:8091/v1/videos/\${video_id}/content" -o lingbot_moe_t2v.mp4`,
+      },
+    ],
+    perf: {
+      columns: ["分辨率", "帧数 / 时长", "推理步数", "机型", "框架版本", "部署配置", "端到端时间 (s)", "每帧时间 (ms)", "备注"],
+      rows: [],
+    },
+    refs: [
+      { label: "官方 recipe · LingBot-Video", url: "https://github.com/vllm-project/vllm-omni/blob/main/recipes/Robbyant/LingBot-Video.md" },
+      { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
+    ],
+  },
+
+  /* ─────────────────────────── LongCat-Image 系列 ─────────────────────────── */
+  {
+    id: "longcat-image",
+    name: "LongCat-Image",
+    series: "longcat",
+    seriesName: "LongCat-Image 系列",
+    org: "meituan-longcat",
+    tasks: ["文生图"],
+    params: "权重约 27.3 GiB（1024×1024）",
+    hfRepo: "meituan-longcat/LongCat-Image",
+    npu: true,
+    npuNote: "",
+    summary: "美团中英双语文生图基础模型",
+    intro: `
+      <p><strong>LongCat-Image</strong> 是美团 LongCat 团队开源的中英双语文生图模型，默认分辨率 1024×1024，官方离线推理表记录的峰值显存约 71.2 GiB、权重 27.3 GiB。</p>
+      <p>官方支持矩阵标注其在昇腾 NPU 上<strong>支持</strong>（全平台 ✓）。注意：官方暂无该模型的专属 serve 文档，在线服务使用标准 --omni 入口（e2e 测试同款）。</p>
+    `,
+    arch: {
+      text: `
+        <p>DiT 主干包含 <strong>transformer_blocks</strong> 与 <strong>single_transformer_blocks</strong> 两组 block。特性支持：TeaCache ✓、Cache-DiT ✓、序列并行 ✓、CFG 并行 ✓、张量并行 ✓、逐层 CPU 卸载 ✓；流水线并行 / HSDP / VAE-patch 并行 / FP8 量化 ✗。</p>
+        <p>数据流：文本提示词 → 文本编码器 → DiT 去噪 → VAE 解码 → 图像。</p>
+      `,
+    },
+    serve: [
+      {
+        title: "部署推理服务 · vllm serve",
+        lang: "bash",
+        code: `# 标准 --omni 入口（官方暂无专属 serve 文档）
+vllm serve meituan-longcat/LongCat-Image --omni --port 8091`,
+        note: "官方未提供该模型的专属 serve 命令与 NPU 专项说明；支持状态以官方矩阵（NPU ✓）为准，参数以官方文档为准。",
+      },
+      {
+        title: "客户端调用 · /v1/images/generations",
+        lang: "bash",
+        code: `curl -X POST http://localhost:8091/v1/images/generations \\
+  -H "Content-Type: application/json" \\
+  -d '{"model": "meituan-longcat/LongCat-Image", "prompt": "a cute cat on the grass", "size": "1024x1024", "seed": 42}' \\
+  | jq -r '.data[0].b64_json' | base64 -d > cat.png`,
+      },
+    ],
+    perf: {
+      columns: ["分辨率", "推理步数", "机型", "框架版本", "部署配置", "单张耗时 (s)", "吞吐 (张/s)", "备注"],
+      rows: [],
+    },
+    refs: [
+      { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
+      { label: "vLLM-Omni 文档 · 图像生成 API", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/serving/image_generation_api/" },
+    ],
+  },
+  {
+    id: "longcat-image-edit",
+    name: "LongCat-Image-Edit",
+    series: "longcat",
+    seriesName: "LongCat-Image 系列",
+    org: "meituan-longcat",
+    tasks: ["图像编辑"],
+    params: "6B（稠密）",
+    hfRepo: "meituan-longcat/LongCat-Image-Edit",
+    npu: true,
+    npuNote: "",
+    summary: "中英双语指令式图像编辑（6B）",
+    intro: `
+      <p><strong>LongCat-Image-Edit</strong> 是美团 LongCat 的中英双语图像编辑模型（6B 稠密）：输入参考图像 + 文本指令，输出编辑后的图像。</p>
+      <p>官方支持矩阵标注其在昇腾 NPU 上<strong>支持</strong>（全平台 ✓）。官方 recipe 仅给出离线推理示例（建议 ≥40 GiB 显存 GPU），未提供专属 serve 命令；e2e 测试通过标准 --omni 入口服务该模型（可选 --enable-cpu-offload、--cache-backend cache_dit、--ulysses-degree 2）。</p>
+    `,
+    arch: {
+      text: `
+        <p>与 LongCat-Image 相同的 DiT 主干（transformer_blocks + single_transformer_blocks），增加参考图像条件输入用于编辑；支持 Cache-DiT / TeaCache 加速。</p>
+        <p>数据流：参考图像（VAE 编码）+ 文本指令 → DiT → VAE 解码 → 编辑后图像。</p>
+      `,
+    },
+    serve: [
+      {
+        title: "部署推理服务 · vllm serve",
+        lang: "bash",
+        code: `# 标准 --omni 入口（e2e 测试同款，可选加速参数）
+vllm serve meituan-longcat/LongCat-Image-Edit --omni --port 8092 \\
+  --cache-backend cache_dit --ulysses-degree 2
+
+# 可选：--enable-cpu-offload（e2e 测试中亦使用）`,
+        note: "官方未提供专属 serve 文档；以下命令组合来自官方 recipe 与 e2e 测试。支持状态以官方矩阵（NPU ✓）为准。",
+      },
+      {
+        title: "离线推理示例（官方 recipe）",
+        lang: "bash",
+        code: `python3 ./examples/offline_inference/image_to_image/image_edit.py \\
+    --image qwen_bear.png \\
+    --prompt "Add a white art board written with colorful text 'vLLM-Omni' on grassland. Add a paintbrush in the bear's hands." \\
+    --output output_image_edit.png \\
+    --num_inference_steps 50 \\
+    --guidance_scale 4.5 \\
+    --seed 42 \\
+    --model meituan-longcat/LongCat-Image-Edit \\
+    --cache_backend cache_dit \\
+    --cache_dit_max_continuous_cached_steps 2`,
+      },
+      {
+        title: "客户端调用 · /v1/images/edits（图像编辑）",
+        lang: "bash",
+        code: `curl -X POST http://localhost:8092/v1/images/edits \\
+  -F "model=meituan-longcat/LongCat-Image-Edit" \\
+  -F "image=@./input.png" \\
+  -F "prompt=Convert this image to watercolor style" \\
+  -F "size=1024x1024" \\
+  -F "output_format=png"
+
+# 响应 .data[0].b64_json 为编辑后的图像（参数以官方图像编辑 API 文档为准）`,
+      },
+    ],
+    perf: {
+      columns: ["分辨率", "推理步数", "机型", "框架版本", "部署配置", "单张耗时 (s)", "吞吐 (张/s)", "备注"],
+      rows: [],
+    },
+    refs: [
+      { label: "recipes.vllm.ai · LongCat-Image-Edit", url: "https://recipes.vllm.ai/meituan-longcat/LongCat-Image-Edit" },
+      { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
+      { label: "vLLM-Omni 文档 · 图像编辑 API", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/serving/image_edit_api/" },
+    ],
+  },
+
+  /* ─────────────────────────── HunyuanVideo 系列 ─────────────────────────── */
+  {
+    id: "hunyuanvideo-1.5-t2v",
+    name: "HunyuanVideo-1.5-T2V",
+    series: "hunyuanvideo",
+    seriesName: "HunyuanVideo 系列",
+    org: "hunyuanvideo-community",
+    tasks: ["文生视频"],
+    params: "480p / 720p 双分辨率（DiT）",
+    hfRepo: "hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-480p_t2v",
+    npu: false,
+    npuNote: "官方矩阵未列入 NPU",
+    summary: "480p / 720p 文生视频（T2V）",
+    intro: `
+      <p><strong>HunyuanVideo-1.5</strong> 是腾讯混元开源的视频生成模型，提供 480p 与 720p 两个分辨率的文生视频（T2V）与图生视频（I2V）checkpoint。</p>
+      <p><strong>注意：</strong>官方支持矩阵仅标注 NVIDIA GPU 与 AMD GPU，<strong>暂未列入 NPU</strong>。480p BF16 约 35 GB 显存（单张 A100 80GB 可跑），720p 需 FP8 + VAE tiling。</p>
+    `,
+    arch: {
+      text: `
+        <p>DiT + VAE 扩散管线（视频，无音频），Flow Matching 调度（flow_shift）。最优配置（官方离线表）：480p T2V flow_shift 5.0 / guidance 6.0 / 50 步；720p T2V 9.0 / 6.0 / 50；CFG 蒸馏版 guidance 1.0。</p>
+        <p>数据流：文本提示词 → 文本编码器 → DiT 去噪 → VAE 解码 → 视频帧。</p>
+      `,
+    },
+    serve: [
+      {
+        title: "部署推理服务 · vllm serve",
+        lang: "bash",
+        code: `# 480p（默认）
+vllm serve hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-480p_t2v --omni \\
+  --port 8098 --flow-shift 5.0
+
+# 720p（需 FP8 + VAE tiling）
+vllm serve hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-720p_t2v --omni \\
+  --port 8098 --flow-shift 9.0 --quantization fp8`,
+        note: "OOM 缓解：--vae-use-slicing、--vae-use-tiling、--enable-cpu-offload、--quantization fp8。官方矩阵未列入 NPU。",
+      },
+      {
+        title: "客户端调用 · /v1/videos（异步任务）",
+        lang: "bash",
+        code: `curl -sS -X POST "http://localhost:8098/v1/videos" \\
+  -H "Accept: application/json" \\
+  -F "prompt=A little girl wearing a straw hat runs through a summer meadow full of wildflowers. A wide shot is used, with the camera panning right to follow her." \\
+  -F "size=832x480" -F "num_frames=33" -F "fps=24" \\
+  -F "num_inference_steps=30" -F "guidance_scale=6.0" \\
+  -F "flow_shift=5.0" -F "seed=42"
+
+# 轮询 GET /v1/videos/{id} 至 completed，再 GET /v1/videos/{id}/content 下载`,
+      },
+    ],
+    perf: {
+      columns: ["分辨率", "帧数 / 时长", "推理步数", "机型", "框架版本", "部署配置", "端到端时间 (s)", "每帧时间 (ms)", "备注"],
+      rows: [],
+    },
+    refs: [
+      { label: "在线服务脚本 · run_server_hunyuan_video_15.sh", url: "https://github.com/vllm-project/vllm-omni/blob/main/examples/online_serving/text_to_video/run_server_hunyuan_video_15.sh" },
+      { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
+    ],
+  },
+  {
+    id: "hunyuanvideo-1.5-i2v",
+    name: "HunyuanVideo-1.5-I2V",
+    series: "hunyuanvideo",
+    seriesName: "HunyuanVideo 系列",
+    org: "hunyuanvideo-community",
+    tasks: ["图生视频"],
+    params: "480p / 720p 双分辨率（DiT）",
+    hfRepo: "hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-480p_i2v",
+    npu: false,
+    npuNote: "官方矩阵未列入 NPU",
+    summary: "480p / 720p 图生视频（I2V）",
+    intro: `
+      <p><strong>HunyuanVideo-1.5-I2V</strong> 是 HunyuanVideo-1.5 的图生视频版本：输入参考图像 + 文本提示词，生成 480p 或 720p 视频。</p>
+      <p><strong>注意：</strong>官方支持矩阵仅标注 NVIDIA GPU 与 AMD GPU，<strong>暂未列入 NPU</strong>。480p BF16 约 35 GB 显存，720p 需 FP8 + VAE tiling。</p>
+    `,
+    arch: {
+      text: `
+        <p>与 T2V 相同的 DiT + VAE 管线（视频，无音频），增加参考图像条件输入；Flow Matching 调度（flow_shift）。最优配置（官方离线表）：480p I2V flow_shift 5.0 / guidance 6.0 / 50 步；720p I2V 7.0 / 6.0 / 50。</p>
+        <p>数据流：参考图像（VAE 编码）+ 文本提示词 → DiT 去噪 → VAE 解码 → 视频帧。</p>
+      `,
+    },
+    serve: [
+      {
+        title: "部署推理服务 · vllm serve",
+        lang: "bash",
+        code: `# 480p（默认）
+vllm serve hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-480p_i2v --omni \\
+  --port 8099 --flow-shift 5.0
+
+# 720p（需 FP8 + VAE tiling）
+vllm serve hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-720p_i2v --omni \\
+  --port 8099 --flow-shift 7.0 --quantization fp8`,
+        note: "OOM 缓解：--vae-use-slicing、--vae-use-tiling、--enable-cpu-offload、--quantization fp8。官方矩阵未列入 NPU。",
+      },
+      {
+        title: "客户端调用 · /v1/videos（异步任务）",
+        lang: "bash",
+        code: `curl -sS -X POST "http://localhost:8099/v1/videos" \\
+  -H "Accept: application/json" \\
+  -F "prompt=A little girl wearing a straw hat runs through a summer meadow full of wildflowers." \\
+  -F "input_reference=@/path/to/input.png" \\
+  -F "size=832x480" -F "num_frames=33" -F "fps=24" \\
+  -F "num_inference_steps=30" -F "guidance_scale=6.0" \\
+  -F "flow_shift=5.0" -F "seed=42"
+
+# 轮询 GET /v1/videos/{id} 至 completed，再 GET /v1/videos/{id}/content 下载`,
+      },
+    ],
+    perf: {
+      columns: ["分辨率", "帧数 / 时长", "推理步数", "机型", "框架版本", "部署配置", "端到端时间 (s)", "每帧时间 (ms)", "备注"],
+      rows: [],
+    },
+    refs: [
+      { label: "在线服务脚本 · run_server_hunyuan_video_15.sh（I2V）", url: "https://github.com/vllm-project/vllm-omni/blob/main/examples/online_serving/image_to_video/run_server_hunyuan_video_15.sh" },
       { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
     ],
   },
