@@ -511,7 +511,7 @@ curl -sS -X POST "\${API_URL}" \\
     ],
     perf: {
       columns: ["分辨率", "帧数 / 时长", "推理步数", "机型", "框架版本", "部署配置", "端到端时间 (s)", "每帧时间 (ms)", "备注"],
-      rows: [],
+      rows: [["1344x768", "124 帧 / 5s", "50", "Ascend910（64GB HBM/卡）", "vllm-omni v0.26.0 / CANN 9.0.1", "4× NPU，t2va", "437.85", "3531.0", "t2va, duration 5s, seed 1101；预热 1 次 + 3 次平均（服务端 e2e_total_ms）"]],
     },
     refs: [
       { label: "官方 NPU recipe · MiniMax-H3-NPU", url: "https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3-NPU.md" },

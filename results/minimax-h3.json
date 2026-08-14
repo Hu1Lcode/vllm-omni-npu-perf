@@ -1,0 +1,52 @@
+{
+  "model_id": "minimax-h3",
+  "metric": "e2e_total_ms",
+  "method": "预热 1 次（丢弃）+ 正式 3 次，取服务端日志 e2e_total_ms 平均值",
+  "env": {
+    "machine": "Ascend910（64GB HBM/卡）",
+    "framework": "vllm-omni v0.26.0 / CANN 9.0.1"
+  },
+  "config": {
+    "endpoint": "http://127.0.0.1:8000/v1/videos/sync",
+    "mode": "sync",
+    "resolution": "1344x768",
+    "frames": 124,
+    "duration": "5",
+    "steps": 50,
+    "deploy": "4× NPU，t2va",
+    "form": {
+      "prompt": "In a snowy blue-purple forest, Ori carefully walks past a sleeping giant; footsteps crunch in the snow while the creature breathes and softly snorts.",
+      "width": "1344",
+      "height": "768",
+      "aspect_ratio": "16:9",
+      "fps": "24",
+      "num_inference_steps": "50",
+      "flow_shift": "12",
+      "seed": "1101",
+      "extra_params": "{\"task\":\"t2va\",\"duration\":5,\"audio_flow_shift\":3.0}"
+    },
+    "data": null
+  },
+  "runs": [
+    {
+      "n": 1,
+      "req_id": "video_sync-bd1bdad21af40c60-b5fcf2f2",
+      "e2e_total_ms": 437473.523
+    },
+    {
+      "n": 2,
+      "req_id": "video_sync-8f3e823013ef48e4-aa07c88e",
+      "e2e_total_ms": 438473.916
+    },
+    {
+      "n": 3,
+      "req_id": "video_sync-8eceda6f674a5da6-b0ddbbe6",
+      "e2e_total_ms": 437588.264
+    }
+  ],
+  "avg_e2e_total_ms": 437845.234,
+  "avg_e2e_s": 437.845,
+  "per_frame_ms": 3531.01,
+  "note": "t2va, duration 5s, seed 1101",
+  "timestamp": "2026-08-14T11:58:07"
+}

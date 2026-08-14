@@ -40,6 +40,7 @@ vLLM-Omni × Ascend NPU 性能摸底脚本
 """
 
 import argparse
+import functools
 import json
 import os
 import re
@@ -47,6 +48,9 @@ import subprocess
 import sys
 import time
 from datetime import datetime
+
+# 非终端环境下 stdout 为块缓冲，实时进度会看不到；统一改为行缓冲
+print = functools.partial(print, flush=True)
 
 ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
 # 部署版本日志样例：
