@@ -72,7 +72,6 @@ def row_from_result(result, columns):
     avg_ms = result["avg_e2e_total_ms"]
     avg_s = avg_ms / 1000.0
     frames = c.get("frames")
-    per_frame = round(avg_ms / frames, 1) if frames else None
 
     values = {
         "分辨率": c.get("resolution", ""),
@@ -84,7 +83,6 @@ def row_from_result(result, columns):
         "机型": e.get("machine", ""),
         "框架版本": e.get("framework", ""),
         "端到端时间 (s)": f"{avg_s:.2f}",
-        "每帧时间 (ms)": f"{per_frame:.1f}" if per_frame is not None else "",
         "单张耗时 (s)": f"{avg_s:.2f}",
         "吞吐 (张/s)": c.get("throughput", ""),
     }
