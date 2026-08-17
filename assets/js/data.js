@@ -60,7 +60,7 @@ vllm serve Wan-AI/Wan2.1-T2V-1.3B-Diffusers --omni \\
       },
     ],
     perf: {
-      columns: ["分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
       rows: [],
     },
     refs: [
@@ -117,7 +117,7 @@ vllm serve Wan-AI/Wan2.1-T2V-14B-Diffusers --omni --port 8091
       },
     ],
     perf: {
-      columns: ["分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
       rows: [],
     },
     refs: [
@@ -162,7 +162,7 @@ vllm serve Wan-AI/Wan2.1-T2V-14B-Diffusers --omni --port 8091
       },
     ],
     perf: {
-      columns: ["分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
       rows: [],
     },
     refs: [
@@ -207,7 +207,7 @@ vllm serve Wan-AI/Wan2.1-T2V-14B-Diffusers --omni --port 8091
       },
     ],
     perf: {
-      columns: ["分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
       rows: [],
     },
     refs: [
@@ -275,7 +275,7 @@ curl -L "http://localhost:8091/v1/videos/\${video_id}/content" -o wan22_t2v_outp
       },
     ],
     perf: {
-      columns: ["分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
       rows: [],
     },
     refs: [
@@ -340,7 +340,7 @@ vllm serve --omni Wan-AI/Wan2.2-I2V-A14B-Diffusers \\
       },
     ],
     perf: {
-      columns: ["分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
       rows: [],
     },
     refs: [
@@ -395,7 +395,7 @@ vllm serve Wan-AI/Wan2.2-TI2V-5B-Diffusers \\
       },
     ],
     perf: {
-      columns: ["分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
       rows: [],
     },
     refs: [
@@ -435,7 +435,7 @@ vllm serve Wan-AI/Wan2.2-TI2V-5B-Diffusers \\
       },
     ],
     perf: {
-      columns: ["分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
       rows: [],
     },
     refs: [
@@ -510,8 +510,8 @@ curl -sS -X POST "\${API_URL}" \\
       },
     ],
     perf: {
-      columns: ["分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
-      rows: [["1344x768", "124 帧 / 5s", "24", "50", "Ascend910（64GB HBM/卡）", "vllm-omni v0.26.0", "437.85"]],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
+      rows: [["t2va", "1344x768", "124 帧 / 5s", "24", "50", "Ascend910（64GB HBM/卡）", "vllm-omni v0.26.0", "437.85"]],
     },
     refs: [
       { label: "官方 NPU recipe · MiniMax-H3-NPU", url: "https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3-NPU.md" },
@@ -568,7 +568,7 @@ curl -sS -X POST "\${API_URL}" \\
       },
     ],
     perf: {
-      columns: ["分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)"],
+      columns: ["任务", "分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)"],
       rows: [],
     },
     refs: [
@@ -619,7 +619,7 @@ curl -sS -X POST "\${API_URL}" \\
       },
     ],
     perf: {
-      columns: ["分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)"],
+      columns: ["任务", "分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)"],
       rows: [],
     },
     refs: [
@@ -672,7 +672,7 @@ curl -sS -X POST "\${API_URL}" \\
       },
     ],
     perf: {
-      columns: ["分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)"],
+      columns: ["任务", "分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)"],
       rows: [],
     },
     refs: [
@@ -727,7 +727,7 @@ curl -sS -X POST "\${API_URL}" \\
       },
     ],
     perf: {
-      columns: ["分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)"],
+      columns: ["任务", "分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)"],
       rows: [],
     },
     refs: [
@@ -778,7 +778,7 @@ curl -sS -X POST "\${API_URL}" \\
       },
     ],
     perf: {
-      columns: ["分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)"],
+      columns: ["任务", "分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)"],
       rows: [],
     },
     refs: [
@@ -828,7 +828,7 @@ curl -sS -X POST "\${API_URL}" \\
       },
     ],
     perf: {
-      columns: ["分辨率", "层数", "推理步数", "机型", "框架版本", "单张耗时 (s)"],
+      columns: ["任务", "分辨率", "层数", "推理步数", "机型", "框架版本", "单张耗时 (s)"],
       rows: [],
     },
     refs: [
@@ -877,7 +877,7 @@ curl -sS -X POST "\${API_URL}" \\
       },
     ],
     perf: {
-      columns: ["分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)"],
+      columns: ["任务", "分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)"],
       rows: [],
     },
     refs: [
@@ -925,7 +925,7 @@ curl -sS -X POST "\${API_URL}" \\
       },
     ],
     perf: {
-      columns: ["分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)"],
+      columns: ["任务", "分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)"],
       rows: [],
     },
     refs: [
@@ -997,7 +997,7 @@ vllm serve diffusers/LTX-2.3-Diffusers --omni \\
       },
     ],
     perf: {
-      columns: ["分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
       rows: [],
     },
     refs: [
@@ -1058,7 +1058,7 @@ curl -L "http://localhost:8091/v1/videos/\${video_id}/content" -o lingbot_t2v.mp
       },
     ],
     perf: {
-      columns: ["分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
       rows: [],
     },
     refs: [
@@ -1116,7 +1116,7 @@ curl -L "http://localhost:8091/v1/videos/\${video_id}/content" -o lingbot_moe_t2
       },
     ],
     perf: {
-      columns: ["分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
       rows: [],
     },
     refs: [
@@ -1166,7 +1166,7 @@ vllm serve meituan-longcat/LongCat-Image --omni --port 8091`,
       },
     ],
     perf: {
-      columns: ["分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)"],
+      columns: ["任务", "分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)"],
       rows: [],
     },
     refs: [
@@ -1235,7 +1235,7 @@ vllm serve meituan-longcat/LongCat-Image-Edit --omni --port 8092 \\
       },
     ],
     perf: {
-      columns: ["分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)"],
+      columns: ["任务", "分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)"],
       rows: [],
     },
     refs: [
@@ -1295,7 +1295,7 @@ vllm serve hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-720p_t2v --omni \\
       },
     ],
     perf: {
-      columns: ["分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
       rows: [],
     },
     refs: [
@@ -1353,7 +1353,7 @@ vllm serve hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-720p_i2v --omni \\
       },
     ],
     perf: {
-      columns: ["分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
       rows: [],
     },
     refs: [

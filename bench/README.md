@@ -39,6 +39,7 @@ python3 bench/bench.py \
   --form 'width=1344' --form 'height=768' --form 'fps=24' \
   --form 'num_inference_steps=50' --form 'flow_shift=12' --form 'seed=1101' \
   --form 'extra_params={"task":"fl2va","duration":8.7}' \
+  --task fl2va \
   --resolution 1344x768 --frames 209 --duration 8.7 --fps 24 --steps 50 \
   --machine 'Atlas 800I A3' --framework 'vllm-omni <commit> / CANN 9.0.1' \
   --deploy '4× NPU，FL2VA' \
@@ -77,12 +78,12 @@ python3 bench/fill_results.py results/minimax-h3.json             # 写回 data.
 python3 bench/fill_results.py                                     # 回填 results/ 下全部
 ```
 
-行内容按每个模型 `perf.columns` 的列序自动映射：分辨率 / 帧数 / 帧率 / 步数 / 机型 / 框架版本 / 端到端时间（或单张耗时）。
+行内容按每个模型 `perf.columns` 的列序自动映射：任务 / 分辨率 / 帧数 / 帧率 / 步数 / 机型 / 框架版本 / 端到端时间（或单张耗时）。
 
 ## 注意事项
 
 - 视频生成一次动辄几分钟，3 次 + 预热 1 次单模型约 15~40 分钟，请合理安排压测时段；
 - 附加模式压测会给正在服务的实例带来真实负载，执行前确认不影响在跑的业务；
 - 建议固定 `seed`，同一配置可复现；
-- 结果 JSON 中务必填准 `--machine / --framework / --resolution / --frames / --fps / --steps`，这些直接进网站表格（`--framework` 只标 vllm-omni 版本；`--deploy`、`--note` 仅留在结果 JSON 备查，不进表格）；
+- 结果 JSON 中务必填准 `--task / --machine / --framework / --resolution / --frames / --fps / --steps`，这些直接进网站表格（`--framework` 只标 vllm-omni 版本；`--deploy`、`--note` 仅留在结果 JSON 备查，不进表格）；
 - 若需 stage 级耗时分析，可再写脚本解析日志中的 `[OmniTiming] ... stages=[...]` 行（本工具暂只取 e2e_total_ms）。

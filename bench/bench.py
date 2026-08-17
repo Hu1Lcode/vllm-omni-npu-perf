@@ -197,6 +197,7 @@ def main():
     ap.add_argument("--ready-timeout", type=int, default=1800, help="自起服务就绪等待上限（秒）")
     ap.add_argument("--out", required=True, help="结果 JSON 输出路径，如 results/minimax-h3.json")
     # 结果元数据（对应网站性能表的列）
+    ap.add_argument("--task", default="", help="任务类型（如 t2va / ref2va / fl2va / t2i / i2i），回填到「任务」列")
     ap.add_argument("--resolution", default="", help="分辨率，如 1344x768")
     ap.add_argument("--frames", type=int, default=None, help="帧数（计算每帧时间用）")
     ap.add_argument("--duration", default="", help="时长（如 8.7s）")
@@ -296,6 +297,7 @@ def main():
             "config": {
                 "endpoint": args.endpoint,
                 "mode": args.mode,
+                "task": args.task,
                 "resolution": args.resolution,
                 "frames": args.frames,
                 "duration": args.duration,

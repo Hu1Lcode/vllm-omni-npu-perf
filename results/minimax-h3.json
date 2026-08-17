@@ -9,6 +9,7 @@
   "config": {
     "endpoint": "http://127.0.0.1:8000/v1/videos/sync",
     "mode": "sync",
+    "task": "t2va",
     "resolution": "1344x768",
     "frames": 124,
     "duration": "5",

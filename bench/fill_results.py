@@ -74,6 +74,7 @@ def row_from_result(result, columns):
     frames = c.get("frames")
 
     values = {
+        "任务": c.get("task", ""),
         "分辨率": c.get("resolution", ""),
         "帧数 / 时长": (f"{frames} 帧 / {c['duration']}s" if frames and c.get("duration")
                         else (f"{frames} 帧" if frames else "")),
