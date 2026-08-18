@@ -22,6 +22,11 @@
 vllm-omni-npu-showcase/
 ├── index.html          # 主页：hero + 任务类型筛选 + 系列分组卡片墙
 ├── model.html          # 详情页统一模板（?id=模型id）
+├── server.py           # 可选静态服务 + user-data.json 读写（数据持久化）
+├── user-data.json      # 部署脚本修改的持久化数据文件
+├── scripts/
+│   ├── <模型id>.sh     # 每个模型的部署推理脚本（与详情页显示一致）
+│   └── generate_scripts.py  # 从 data.js 自动生成/校验 .sh 文件
 ├── assets/
 │   ├── css/style.css   # 全局样式
 │   └── js/
@@ -122,6 +127,19 @@ perf: {
 - 数据文件纳入 git 管理，可直接 `git commit && git push` 把最优部署配置同步到 GitHub；
 - 不通过 server.py（直接双击 `index.html`）打开时，自动回退到浏览器 localStorage；
 - 注意：`server.py` 的 `/api/data` 接口不做鉴权，局域网内任何人可读写该文件，请仅在可信网络中使用。
+
+## 部署脚本文件（scripts/）
+
+`scripts/` 下每个模型一个 `<模型id>.sh`，内容与站点详情页「部署推理脚本」区块完全一致（块标题作为 `# ----------` 注释分隔，块内说明以 `# 注:` 追加）。
+
+由 `scripts/generate_scripts.py` 从 `assets/js/data.js` 自动生成：
+
+```bash
+python3 scripts/generate_scripts.py          # 重新生成全部（改 data.js 后执行）
+python3 scripts/generate_scripts.py --check  # 只检查是否与 data.js 一致（不写盘）
+```
+
+> 注意：不要手改 `scripts/*.sh`，修改部署脚本请改 `data.js` 中对应模型的 `serve` 字段后重新生成。
 
 ## 内容说明
 
