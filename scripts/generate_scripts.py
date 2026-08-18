@@ -151,7 +151,8 @@ def render_sh(model):
     lines.append(f"# 系列: {model['seriesName']} ｜ 组织: {model['org']} ｜ 仓库: {model['hfRepo']}")
     lines.append(f"# 任务: {' / '.join(model['tasks'])}")
     lines.append("# 由 scripts/generate_scripts.py 从 assets/js/data.js 自动生成；")
-    lines.append("# 修改请改 data.js 中该模型的 serve 字段后重新生成。")
+    lines.append("# 可直接编辑本文件——页面（经 server.py）会同步显示修改；")
+    lines.append("# 也可改 data.js 的 serve 字段后重新生成覆盖本文件。")
     lines.append("# ============================================================")
     lines.append("")
     for b in model["blocks"]:

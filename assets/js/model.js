@@ -116,7 +116,7 @@
 
     <section class="section">
       <h2 class="section-title"><span class="sec-no">03</span> 部署推理脚本</h2>
-      ${serveBlocksHtml(model.serve)}
+      <div id="serveBlocks">${serveBlocksHtml(model.serve)}</div>
     </section>
 
     <section class="section">
@@ -131,27 +131,71 @@
     </section>`;
 
   /* ---------- 复制按钮 ---------- */
-  app.querySelectorAll(".code-block .copy-btn").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const code = btn.closest(".code-block").querySelector("code").innerText;
-      let ok = false;
-      try {
-        await navigator.clipboard.writeText(code);
-        ok = true;
-      } catch (e) {
-        const t = document.createElement("textarea");
-        t.value = code;
-        t.style.position = "fixed";
-        t.style.opacity = "0";
-        document.body.appendChild(t);
-        t.select();
-        try { ok = document.execCommand("copy"); } catch (e2) { ok = false; }
-        document.body.removeChild(t);
-      }
-      if (ok) {
-        btn.textContent = "已复制 ✓";
-        setTimeout(() => { btn.textContent = "复制"; }, 1500);
-      }
+  function bindCopy() {
+    app.querySelectorAll(".code-block .copy-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const code = btn.closest(".code-block").querySelector("code").innerText;
+        let ok = false;
+        try {
+          await navigator.clipboard.writeText(code);
+          ok = true;
+        } catch (e) {
+          const t = document.createElement("textarea");
+          t.value = code;
+          t.style.position = "fixed";
+          t.style.opacity = "0";
+          document.body.appendChild(t);
+          t.select();
+          try { ok = document.execCommand("copy"); } catch (e2) { ok = false; }
+          document.body.removeChild(t);
+        }
+        if (ok) {
+          btn.textContent = "已复制 ✓";
+          setTimeout(() => { btn.textContent = "复制"; }, 1500);
+        }
+      });
     });
-  });
+  }
+  bindCopy();
+
+  /* ---------- 部署脚本与 scripts/<模型id>.sh 同步 ----------
+   * 通过 server.py 访问时，从 /api/scripts/<id>.sh 读取并渲染；
+   * 修改 scripts/ 下的脚本后刷新页面即可生效；纯静态打开时回退 data.js。
+   */
+  function parseScriptFile(text) {
+    const blocks = [];
+    let cur = null;
+    for (const line of text.split(/\r?\n/)) {
+      const m = line.match(/^# ---------- (.+?) ----------$/);
+      if (m) { cur = { title: m[1], code: [], note: "" }; blocks.push(cur); continue; }
+      if (!cur) continue; // 文件头注释，跳过
+      const nm = line.match(/^# 注: (.*)$/);
+      if (nm) { cur.note = (cur.note ? cur.note + " " : "") + nm[1]; continue; }
+      cur.code.push(line);
+    }
+    return blocks.map((b) => ({
+      title: b.title,
+      lang: "bash",
+      code: b.code.join("\n").replace(/\n+$/, ""),
+      note: b.note,
+    }));
+  }
+
+  (async () => {
+    try {
+      if (typeof fetch !== "function") return;
+      const resp = await fetch(`/api/scripts/${encodeURIComponent(model.id)}.sh`, { cache: "no-store" });
+      if (!resp.ok) return;
+      const blocks = parseScriptFile(await resp.text());
+      if (!blocks.length) return;
+      const el = document.getElementById("serveBlocks");
+      if (!el) return;
+      el.insertAdjacentHTML(
+        "beforebegin",
+        `<p class="code-note">✓ 已与 scripts/${esc(model.id)}.sh 同步，修改该文件后刷新页面即生效</p>`
+      );
+      el.innerHTML = serveBlocksHtml(blocks);
+      bindCopy();
+    } catch (e) { /* 纯静态模式：使用 data.js 中的内容 */ }
+  })();
 })();

@@ -23,7 +23,7 @@
 vllm-omni-npu-showcase/
 ├── index.html          # 主页：hero + 任务类型筛选 + 系列分组卡片墙
 ├── model.html          # 详情页统一模板（?id=模型id）
-├── server.py           # 可选静态服务
+├── server.py           # 可选静态服务 + 部署脚本同步（/api/scripts）
 ├── scripts/
 │   ├── <模型id>.sh     # 每个模型的部署推理脚本（与详情页显示一致）
 │   └── generate_scripts.py  # 从 data.js 自动生成/校验 .sh 文件
@@ -46,13 +46,13 @@ vllm-omni-npu-showcase/
   scp -r user@server:/home/wjh/vllm-omni-npu-showcase ~/Downloads/
   # 然后本地双击 ~/Downloads/vllm-omni-npu-showcase/index.html
   ```
-- 局域网多人访问时可用 `server.py` 起静态服务（等价于 http.server）：
+- 局域网多人访问时可用 `server.py` 起静态服务（含详情页部署脚本与 `scripts/` 的同步显示）：
   ```bash
   cd /home/wjh/vllm-omni-npu-showcase
   python3 server.py --port 8899   # 容器内 8000 端口常被 vllm 服务占用，请用其他端口
   # 浏览器访问 http://<服务器IP>:8899/
   ```
-- 也可以直接用 `python3 -m http.server 8899`。
+- 也可以直接用 `python3 -m http.server 8899`（无脚本同步功能）。
 
 > 唯一需要联网的是点击页面里的「官方文档 / recipes.vllm.ai / HuggingFace」等外链；页面本身渲染完全离线。
 
@@ -96,16 +96,18 @@ perf: {
 
 ## 部署脚本文件（scripts/）
 
-`scripts/` 下每个模型一个 `<模型id>.sh`，内容与站点详情页「部署推理脚本」区块完全一致（块标题作为 `# ----------` 注释分隔，块内说明以 `# 注:` 追加）。
+`scripts/` 下每个模型一个 `<模型id>.sh`，内容与站点详情页「部署推理脚本」区块一致（块标题作为 `# ----------` 注释分隔，块内说明以 `# 注:` 追加）。
 
-由 `scripts/generate_scripts.py` 从 `assets/js/data.js` 自动生成：
+**`scripts/` 是详情页部署脚本的同步数据源**：通过 `server.py` 访问站点时，详情页会自动读取 `scripts/<模型id>.sh` 的内容来渲染部署脚本区块（页面顶部会显示「✓ 已与 scripts/<模型id>.sh 同步」）。**修改脚本后刷新页面即可看到更新**；纯静态打开（无 server.py）时，页面使用 `data.js` 中的内容。
+
+初始文件由 `scripts/generate_scripts.py` 从 `assets/js/data.js` 生成：
 
 ```bash
-python3 scripts/generate_scripts.py          # 重新生成全部（改 data.js 后执行）
+python3 scripts/generate_scripts.py          # 从 data.js 重新生成全部（会覆盖手改内容）
 python3 scripts/generate_scripts.py --check  # 只检查是否与 data.js 一致（不写盘）
 ```
 
-> 注意：不要手改 `scripts/*.sh`，修改部署脚本请改 `data.js` 中对应模型的 `serve` 字段后重新生成。
+> 两种维护方式任选：直接编辑 `scripts/*.sh`（页面即时同步）；或改 `data.js` 的 `serve` 字段后重新生成覆盖。
 
 ## 内容说明
 

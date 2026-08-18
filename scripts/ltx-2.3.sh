@@ -4,7 +4,8 @@
 # 系列: LTX 系列 ｜ 组织: Lightricks ｜ 仓库: diffusers/LTX-2.3-Diffusers
 # 任务: 文生视频 / 图生视频 / 视频+音频
 # 由 scripts/generate_scripts.py 从 assets/js/data.js 自动生成；
-# 修改请改 data.js 中该模型的 serve 字段后重新生成。
+# 可直接编辑本文件——页面（经 server.py）会同步显示修改；
+# 也可改 data.js 的 serve 字段后重新生成覆盖本文件。
 # ============================================================
 
 # ---------- 部署推理服务 · vllm serve ----------

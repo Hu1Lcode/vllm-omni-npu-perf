@@ -4,7 +4,8 @@
 # 系列: Z-Image 系列 ｜ 组织: Tongyi-MAI ｜ 仓库: Tongyi-MAI/Z-Image-Turbo
 # 任务: 文生图
 # 由 scripts/generate_scripts.py 从 assets/js/data.js 自动生成；
-# 修改请改 data.js 中该模型的 serve 字段后重新生成。
+# 可直接编辑本文件——页面（经 server.py）会同步显示修改；
+# 也可改 data.js 的 serve 字段后重新生成覆盖本文件。
 # ============================================================
 
 # ---------- 部署推理服务 · vllm serve ----------
