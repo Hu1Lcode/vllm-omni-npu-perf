@@ -1157,6 +1157,73 @@ vllm serve hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-720p_i2v --omni \\
       { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
     ],
   },
+
+  /* ─────────────────────────── Cosmos3 系列 ─────────────────────────── */
+  {
+    id: "cosmos3-super",
+    name: "Cosmos3-Super",
+    series: "cosmos3",
+    seriesName: "Cosmos3 系列",
+    org: "nvidia",
+    tasks: ["文生图", "文生视频", "图生视频", "视频+音频"],
+    params: "64B（稠密，Mixture-of-Transformers）",
+    hfRepo: "nvidia/Cosmos3-Super",
+    npu: true,
+    npuNote: "",
+    summary: "NVIDIA 全模态世界模型：T2I / T2V / I2V / V2V / 带声音视频 / 动作策略",
+    intro: `
+      <p><strong>Cosmos3-Super</strong> 是 NVIDIA 开源的 Cosmos3 全模态世界模型（64B，Mixture-of-Transformers 架构）：统一支持文生图（T2I）、文生视频（T2V）、图生视频（I2V）、视频生视频（V2V）、带声音的视频生成以及动作策略（forward dynamics / policy / inverse dynamics）。</p>
+      <p>官方支持矩阵标注其在昇腾 NPU 上<strong>支持</strong>，并有专门 NPU recipe（8× Ascend910 A2/A3）：配合 mindie-sd 融合算子与 Laser Attention，T2I 256²/2 步约 1.5 秒。注意：NPU 上 FP8 量化尚未验证、--enable-layerwise-offload 未测试。</p>
+    `,
+    arch: {
+      text: `
+        <p>Mixture-of-Transformers 双通路架构：<strong>UND</strong>（理解）通路在文本 token 上做因果自注意力（Qwen3-VL 骨干），<strong>GEN</strong>（生成）通路中视觉 Q 对 [K_und, K_gen] 做交叉注意力。视频侧使用 Wan VAE（时空编解码），声音侧使用 Diffusers-format AVAE 音频 tokenizer（generate_sound 时输出 AAC 48kHz 立体声）。采用流匹配采样（flow_shift）。默认启用安全护栏（guardrail，--no-guardrails 可关闭）。</p>
+        <p>数据流：文本/图像/视频输入 → Qwen3-VL 编码（UND）→ GEN 交叉注意力去噪 → Wan VAE 解码（+ 音频生成）→ 输出。</p>
+      `,
+    },
+    serve: [
+      {
+        title: "部署推理服务 · vllm serve（8 卡 NPU）",
+        lang: "bash",
+        code: `# 前置：安装 mindie-sd 融合算子库（gitcode.com/Ascend/MindIE-SD）
+export MINDIE_SD_FA_TYPE=ascend_laser_attention
+
+vllm serve nvidia/Cosmos3-Super \\
+  --omni \\
+  --host 0.0.0.0 --port 8000 \\
+  --tensor-parallel-size 8 \\
+  --model-class-name Cosmos3OmniDiffusersPipeline \\
+  --no-guardrails \\
+  --init-timeout 1800`,
+        note: "官方 NPU recipe（8× Ascend910 A2/A3）验证：T2I 256²/2 步约 1.5s；NPU 上 FP8 量化未验证、--enable-layerwise-offload 未测试。",
+      },
+      {
+        title: "客户端调用 · /v1/videos/sync（T2V）",
+        lang: "bash",
+        code: `# T2V（1280×720，189 帧，35 步）
+curl -sS -X POST http://localhost:8000/v1/videos/sync -H "Accept: video/mp4" \\
+  -F "model=nvidia/Cosmos3-Super" -F "prompt=A robot arm is cleaning a plate in the kitchen" \\
+  -F "size=1280x720" -F "num_frames=189" -F "fps=24" -F "num_inference_steps=35" \\
+  -F "guidance_scale=6.0" -F "max_sequence_length=4096" -F "flow_shift=10.0" \\
+  -F 'extra_params={"use_resolution_template":false,"use_duration_template":false,"guardrails":false}' \\
+  -F "seed=17" -o cosmos3_super_t2v.mp4
+
+# T2V + 声音：追加 -F "generate_sound=true" -F "sound_duration=7.875"
+# I2V：追加 -F "input_reference=@参考图.jpg;type=image/jpeg"
+# V2V：追加 -F "input_reference=@参考视频.mp4;type=video/mp4"
+# T2I：POST /v1/images/generations（size=1024x1024，50 步，guidance_scale=7.0）`,
+      },
+    ],
+    perf: {
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)", "备注"],
+      rows: [],
+    },
+    refs: [
+      { label: "官方 NPU recipe · Cosmos3-Super", url: "https://github.com/vllm-project/vllm-omni/blob/main/recipes/cosmos3/Cosmos3-Super.md" },
+      { label: "recipes.vllm.ai · Cosmos3-Super", url: "https://recipes.vllm.ai/nvidia/Cosmos3-Super" },
+      { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
+    ],
+  },
 ];
 
 /* ============================================================
