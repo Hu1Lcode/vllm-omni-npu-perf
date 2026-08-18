@@ -403,46 +403,6 @@ vllm serve Wan-AI/Wan2.2-TI2V-5B-Diffusers \\
       { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
     ],
   },
-  {
-    id: "wan22-s2v-14b",
-    name: "Wan2.2-S2V-14B",
-    series: "wan22",
-    seriesName: "Wan 2.2 系列",
-    org: "Wan-AI",
-    tasks: ["语音视频"],
-    params: "14B",
-    hfRepo: "Wan-AI/Wan2.2-S2V-14B",
-    npu: true,
-    npuNote: "",
-    summary: "语音驱动视频生成，口型与动作同步",
-    intro: `
-      <p><strong>Wan2.2-S2V-14B</strong> 是 Wan 2.2 的语音驱动视频（speech-to-video）模型：输入参考视频与语音音频，生成口型、动作与语音内容同步的视频，适合数字人、口播等场景。</p>
-      <p>官方支持矩阵标注其在昇腾 NPU 上支持。</p>
-    `,
-    arch: {
-      text: `
-        <p>DiT + VAE 架构：参考视频帧经 VAE 编码，语音音频经音频编码器提取特征后作为条件注入 DiT，驱动生成与语音同步的视频帧。</p>
-        <p>数据流：参考视频（VAE 编码）+ 语音 → DiT → VAE 解码 → 同步视频。</p>
-      `,
-    },
-    serve: [
-      {
-        title: "部署推理服务 · vllm serve",
-        lang: "bash",
-        code: `vllm serve Wan-AI/Wan2.2-S2V-14B \\
-  --omni --port 8091`,
-        note: "客户端调用参数（语音输入、参考视频等）请参考官方文档「语音驱动视频在线推理」示例。",
-      },
-    ],
-    perf: {
-      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)"],
-      rows: [],
-    },
-    refs: [
-      { label: "vLLM-Omni 文档 · 语音驱动视频在线推理", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/user_guide/examples/online_serving/speech_to_video/" },
-      { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
-    ],
-  },
 
   /* ─────────────────────────── MiniMax H3 ─────────────────────────── */
   {
