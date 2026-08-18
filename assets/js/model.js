@@ -62,12 +62,11 @@
   }
 
   /* ---------- 性能数据表 ---------- */
-  function perfTableHtml(perf) {
-    const cols = (perf && perf.columns) || [];
-    const rows = (perf && perf.rows) || [];
-    const body = rows.length
-      ? rows.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")
-      : `<tr class="perf-empty"><td colspan="${cols.length}">暂无实测数据 —— 待填入（编辑 assets/js/data.js 中该模型的 perf.rows）</td></tr>`;
+  function perfTableHtml(columns, rows) {
+    const cols = columns || [];
+    const body = (rows && rows.length)
+      ? rows.map((r) => `<tr>${(r || []).map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")
+      : `<tr class="perf-empty"><td colspan="${cols.length}">暂无实测数据 —— 待填入（编辑 perf-data.json 或运行 bench 工具链）</td></tr>`;
     return `
       <div class="table-wrap">
         <table class="perf-table">
@@ -121,8 +120,8 @@
 
     <section class="section">
       <h2 class="section-title"><span class="sec-no">04</span> 性能数据</h2>
-      <p class="perf-hint">⚠ 以下为占位表格，性能数据待填入实测结果（NPU 实测）。</p>
-      ${perfTableHtml(model.perf)}
+      <p class="perf-hint" id="perfHint">⚠ 以下为占位表格，性能数据待填入实测结果（NPU 实测）。</p>
+      <div id="perfTable">${perfTableHtml(model.perf.columns, model.perf.rows)}</div>
     </section>
 
     <section class="section">
@@ -182,20 +181,43 @@
   }
 
   (async () => {
+    // 部署脚本同步：scripts/<模型id>.sh（经 server.py /api/scripts）
     try {
       if (typeof fetch !== "function") return;
       const resp = await fetch(`/api/scripts/${encodeURIComponent(model.id)}.sh`, { cache: "no-store" });
+      if (resp.ok) {
+        const blocks = parseScriptFile(await resp.text());
+        if (blocks.length) {
+          const el = document.getElementById("serveBlocks");
+          if (el) {
+            el.insertAdjacentHTML(
+              "beforebegin",
+              `<p class="code-note">✓ 已与 scripts/${esc(model.id)}.sh 同步，修改该文件后刷新页面即生效</p>`
+            );
+            el.innerHTML = serveBlocksHtml(blocks);
+            bindCopy();
+          }
+        }
+      }
+    } catch (e) { /* 纯静态模式：使用 data.js 中的内容 */ }
+
+    // 性能数据同步：perf-data.json（经 server.py /api/perf）
+    try {
+      if (typeof fetch !== "function") return;
+      const resp = await fetch(`/api/perf/${encodeURIComponent(model.id)}`, { cache: "no-store" });
       if (!resp.ok) return;
-      const blocks = parseScriptFile(await resp.text());
-      if (!blocks.length) return;
-      const el = document.getElementById("serveBlocks");
+      const data = await resp.json();
+      const rows = data && Array.isArray(data.rows) && data.rows.length ? data.rows : null;
+      if (!rows) return;
+      const el = document.getElementById("perfTable");
       if (!el) return;
+      const hint = document.getElementById("perfHint");
+      if (hint) hint.style.display = "none";
       el.insertAdjacentHTML(
         "beforebegin",
-        `<p class="code-note">✓ 已与 scripts/${esc(model.id)}.sh 同步，修改该文件后刷新页面即生效</p>`
+        `<p class="code-note">✓ 性能数据已与 perf-data.json 同步，修改该文件后刷新页面即生效</p>`
       );
-      el.innerHTML = serveBlocksHtml(blocks);
-      bindCopy();
-    } catch (e) { /* 纯静态模式：使用 data.js 中的内容 */ }
+      el.innerHTML = perfTableHtml((model.perf && model.perf.columns) || [], rows);
+    } catch (e) { /* 纯静态模式：使用 data.js 中的 rows */ }
   })();
 })();

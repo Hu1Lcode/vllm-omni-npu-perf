@@ -19,6 +19,7 @@ import re
 import sys
 
 DATA_JS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "js", "data.js")
+PERF_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "perf-data.json")
 
 
 def bracket_scan(text, start):
@@ -66,7 +67,8 @@ def locate_model_block(text, model_id):
     return m.start(), m.end() + perf_m.start()
 
 
-def row_from_result(result, columns):
+def row_values(result, columns):
+    """按列序返回该结果的纯字符串行（data.js 与 perf-data.json 共用）。"""
     c = result.get("config", {})
     e = result.get("env", {})
     avg_ms = result["avg_e2e_total_ms"]
@@ -88,7 +90,11 @@ def row_from_result(result, columns):
         "吞吐 (张/s)": c.get("throughput", ""),
         "备注": result.get("note", ""),
     }
-    return [js_string(values.get(col, "")) for col in columns]
+    return [str(values.get(col, "")) for col in columns]
+
+
+def row_from_result(result, columns):
+    return [js_string(v) for v in row_values(result, columns)]
 
 
 def fill_one(text, result, dry_run=False):
@@ -111,12 +117,13 @@ def fill_one(text, result, dry_run=False):
     rows_open = cols_end + rows_m.end() - 1
     rows_end = bracket_scan(text, rows_open)
 
-    row_literal = "[" + ", ".join(row_from_result(result, columns)) + "]"
+    plain_row = row_values(result, columns)
+    row_literal = "[" + ", ".join(js_string(v) for v in plain_row) + "]"
     new_text = text[:rows_open + 1] + row_literal + text[rows_end - 1:]
     if dry_run:
         print(f"[dry-run] {model_id} 将写入行:")
         print("   " + row_literal)
-    return new_text
+    return new_text, model_id, columns, plain_row
 
 
 def main():
@@ -132,17 +139,32 @@ def main():
     with open(DATA_JS, encoding="utf-8") as f:
         text = f.read()
     new_text = text
+    updates = []  # (model_id, plain_row)
     for fp in files:
         with open(fp, encoding="utf-8") as f:
             result = json.load(f)
-        new_text = fill_one(new_text, result, dry_run=args.dry_run)
+        new_text, model_id, columns, plain_row = fill_one(new_text, result, dry_run=args.dry_run)
+        updates.append((model_id, plain_row))
 
     if args.dry_run:
-        print("\n[dry-run] 未修改 data.js")
+        print("\n[dry-run] 未修改 data.js / perf-data.json")
     else:
         with open(DATA_JS, "w", encoding="utf-8") as f:
             f.write(new_text)
-        print(f"已回填 {len(files)} 个结果到 {DATA_JS}")
+        # 同步写入 perf-data.json（页面经 server.py /api/perf 读取）
+        try:
+            with open(PERF_FILE, encoding="utf-8") as f:
+                perf_data = json.load(f)
+        except (OSError, ValueError):
+            perf_data = {}
+        if not isinstance(perf_data, dict):
+            perf_data = {}
+        for model_id, plain_row in updates:
+            perf_data[model_id] = [plain_row]
+        with open(PERF_FILE, "w", encoding="utf-8") as f:
+            json.dump(perf_data, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+        print(f"已回填 {len(files)} 个结果到 {DATA_JS} 与 {PERF_FILE}")
 
 
 if __name__ == "__main__":

@@ -13,6 +13,7 @@ vLLM-Omni NPU 模型画廊 —— 静态站点 + 部署脚本同步服务
 """
 
 import argparse
+import json
 import os
 import re
 import sys
@@ -20,9 +21,21 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SCRIPTS_DIR = os.path.join(ROOT, "scripts")
+PERF_FILE = os.path.join(ROOT, "perf-data.json")
 
 # 只允许 <字母数字_- .>.sh 的文件名（模型 id 可能含小数点，如 wan21-t2v-1.3b），防止路径穿越
 SCRIPT_NAME_RE = re.compile(r"^[A-Za-z0-9_.-]+\.sh$")
+MODEL_ID_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
+
+
+def load_perf_data():
+    """读取 perf-data.json；文件缺失或损坏时返回空 dict。"""
+    try:
+        with open(PERF_FILE, encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except (OSError, ValueError):
+        return {}
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -30,6 +43,22 @@ class Handler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory=ROOT, **kwargs)
 
     def do_GET(self):
+        if self.path.startswith("/api/perf/"):
+            model_id = self.path[len("/api/perf/"):]
+            if not MODEL_ID_RE.fullmatch(model_id):
+                self.send_error(400, "invalid model id")
+                return
+            rows = load_perf_data().get(model_id)
+            if rows is None:
+                self.send_error(404, "no perf data for this model")
+                return
+            body = json.dumps({"model_id": model_id, "rows": rows}, ensure_ascii=False)
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(body.encode("utf-8"))
+            return
         if self.path.startswith("/api/scripts/"):
             name = self.path[len("/api/scripts/"):]
             if not SCRIPT_NAME_RE.fullmatch(name):
