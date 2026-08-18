@@ -41,12 +41,13 @@ vllm-omni-npu-showcase/
   scp -r user@server:/home/wjh/vllm-omni-npu-showcase ~/Downloads/
   # 然后本地双击 ~/Downloads/vllm-omni-npu-showcase/index.html
   ```
-- （可选）仅当需要局域网内多人通过浏览器访问时，才起一个静态文件服务：
+- **推荐用 `server.py` 启动**（静态服务 + 数据文件读写，见下方「数据持久化」）：
   ```bash
   cd /home/wjh/vllm-omni-npu-showcase
-  python3 -m http.server 8899   # 容器内 8000 端口常被 vllm 服务占用，请用其他端口
+  python3 server.py --port 8899   # 容器内 8000 端口常被 vllm 服务占用，请用其他端口
   # 浏览器访问 http://<服务器IP>:8899/
   ```
+- 仅需静态预览（不需要保存功能）也可以用 `python3 -m http.server 8899`。
 
 > 唯一需要联网的是点击页面里的「官方文档 / recipes.vllm.ai / HuggingFace」等外链；页面本身渲染完全离线。
 
@@ -98,6 +99,29 @@ perf: {
 - **导出修改 JSON**：章节标题右侧按钮，把与该模型默认脚本不一致的块导出为 `<模型id>-serve-patch.json`。
 
 > 注意：localStorage 的保存是「本浏览器」级别的，换浏览器/换机器不会带过去；要把改动正式落到网站仓库，请用「导出修改 JSON」导出后，交给维护者合并进 `assets/js/data.js` 对应模型的 `serve` 字段（或直接编辑 data.js）。
+
+## 数据持久化（server.py 文件模式）
+
+通过 `python3 server.py` 访问站点时，部署脚本的修改会持久化到项目根目录的 **`user-data.json`**：
+
+- 详情页加载时**自动从该文件读取**对应模型的脚本修改并恢复；
+- 点「**保存**」直接**写回该文件**（原子写入，多模型的数据共存于同一文件）；
+- 点「**重置**」从文件中删除该块的修改；
+- 文件格式：
+
+  ```json
+  {
+    "serve": {
+      "minimax-h3": [
+        { "index": 0, "title": "部署推理服务 · vllm serve（8 卡 NPU）", "code": "vllm serve ..." }
+      ]
+    }
+  }
+  ```
+
+- 数据文件纳入 git 管理，可直接 `git commit && git push` 把最优部署配置同步到 GitHub；
+- 不通过 server.py（直接双击 `index.html`）打开时，自动回退到浏览器 localStorage；
+- 注意：`server.py` 的 `/api/data` 接口不做鉴权，局域网内任何人可读写该文件，请仅在可信网络中使用。
 
 ## 内容说明
 
