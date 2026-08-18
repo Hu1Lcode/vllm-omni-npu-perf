@@ -43,22 +43,19 @@
     return `<span class="badge badge-npu no">NPU ✗ 暂不支持</span>`;
   }
 
-  /* ---------- 部署脚本代码块（可编辑 + 本地保存） ---------- */
+  /* ---------- 部署脚本代码块 ---------- */
   function serveBlocksHtml(serve) {
     return (serve || [])
-      .map((b, i) => {
+      .map((b) => {
         const note = b.note ? `<p class="code-note">${b.note}</p>` : "";
         return `
-          <div class="code-block" data-block="${i}">
+          <div class="code-block">
             <div class="code-head">
               <span class="cb-title">${esc(b.title || "脚本")}</span>
               <span class="cb-lang">${esc(b.lang || "text")}</span>
-              <span class="saved-badge" style="display:none">已保存 ✓</span>
               <button class="copy-btn" type="button">复制</button>
-              <button class="copy-btn save-btn" type="button">保存</button>
-              <button class="copy-btn reset-btn" type="button">重置</button>
             </div>
-            <textarea class="code-editor" spellcheck="false">${esc(b.code)}</textarea>
+            <pre><code>${esc(b.code)}</code></pre>
           </div>${note}`;
       })
       .join("");
@@ -118,10 +115,7 @@
     </section>
 
     <section class="section">
-      <div class="section-title-row">
-        <h2 class="section-title"><span class="sec-no">03</span> 部署推理脚本</h2>
-        <button class="copy-btn" id="exportServeBtn" type="button">导出修改 JSON</button>
-      </div>
+      <h2 class="section-title"><span class="sec-no">03</span> 部署推理脚本</h2>
       ${serveBlocksHtml(model.serve)}
     </section>
 
@@ -138,10 +132,8 @@
 
   /* ---------- 复制按钮 ---------- */
   app.querySelectorAll(".code-block .copy-btn").forEach((btn) => {
-    if (btn.classList.contains("save-btn") || btn.classList.contains("reset-btn")) return;
     btn.addEventListener("click", async () => {
-      const ta = btn.closest(".code-block").querySelector(".code-editor");
-      const code = ta ? ta.value : "";
+      const code = btn.closest(".code-block").querySelector("code").innerText;
       let ok = false;
       try {
         await navigator.clipboard.writeText(code);
@@ -162,121 +154,4 @@
       }
     });
   });
-
-  /* ---------- 部署脚本本地编辑：保存 / 重置 / 导出 ----------
-   * 两种持久化：
-   *  - 文件模式：通过 server.py 访问时，读写 /api/data（user-data.json）
-   *  - 兜底模式：纯静态打开（无服务），用浏览器 localStorage
-   */
-  const storeKey = (i) => `vllmOmniNpu.serve.${model.id}.${i}`;
-  function storageGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
-  function storageSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
-  function storageRemove(k) { try { localStorage.removeItem(k); } catch (e) {} }
-  function flash(btn, text) {
-    const orig = btn.textContent;
-    btn.textContent = text;
-    setTimeout(() => { btn.textContent = orig; }, 1200);
-  }
-
-  let fileMode = false;
-  let fileData = null;
-  async function loadFileData() {
-    try {
-      if (typeof fetch !== "function") return;
-      const resp = await fetch("/api/data", { cache: "no-store" });
-      if (!resp.ok) return;
-      const data = await resp.json();
-      if (data && typeof data === "object") { fileData = data; fileMode = true; }
-    } catch (e) { /* 纯静态模式：保持 localStorage 兜底 */ }
-  }
-  async function getFileData() {
-    if (fileData) return fileData;
-    try {
-      const resp = await fetch("/api/data", { cache: "no-store" });
-      if (resp.ok) fileData = await resp.json();
-    } catch (e) {}
-    if (!fileData || typeof fileData !== "object") fileData = {};
-    return fileData;
-  }
-  async function putFileData(data) {
-    try {
-      const resp = await fetch("/api/data", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!resp.ok) return false;
-      fileData = await resp.json();
-      return true;
-    } catch (e) { return false; }
-  }
-  async function saveBlockToFile(i, code) {
-    const data = await getFileData();
-    data.serve = data.serve || {};
-    const arr = (data.serve[model.id] = data.serve[model.id] || []).filter((e) => e.index !== i);
-    arr.push({ index: i, title: (model.serve[i] || {}).title || "", code });
-    return putFileData(data);
-  }
-  async function removeBlockFromFile(i) {
-    const data = await getFileData();
-    data.serve = data.serve || {};
-    data.serve[model.id] = (data.serve[model.id] || []).filter((e) => e.index !== i);
-    return putFileData(data);
-  }
-
-  (async () => {
-    await loadFileData();
-    const savedByIndex = {};
-    if (fileMode && fileData.serve && fileData.serve[model.id]) {
-      fileData.serve[model.id].forEach((e) => {
-        if (e && typeof e.index === "number") savedByIndex[e.index] = e.code;
-      });
-    }
-    app.querySelectorAll(".code-block").forEach((block) => {
-      const i = parseInt(block.dataset.block, 10);
-      const ta = block.querySelector(".code-editor");
-      const badge = block.querySelector(".saved-badge");
-      const saved = fileMode ? savedByIndex[i] : storageGet(storeKey(i));
-      if (saved != null) { ta.value = saved; badge.style.display = "inline-flex"; }
-
-      block.querySelector(".save-btn").addEventListener("click", async () => {
-        const ok = fileMode ? await saveBlockToFile(i, ta.value) : storageSet(storeKey(i), ta.value);
-        if (ok) {
-          badge.style.display = "inline-flex";
-          flash(block.querySelector(".save-btn"), "已保存 ✓");
-        } else {
-          flash(block.querySelector(".save-btn"), "保存失败");
-        }
-      });
-      block.querySelector(".reset-btn").addEventListener("click", async () => {
-        if (fileMode) await removeBlockFromFile(i);
-        storageRemove(storeKey(i));
-        ta.value = (model.serve[i] || {}).code || "";
-        badge.style.display = "none";
-        flash(block.querySelector(".reset-btn"), "已重置");
-      });
-    });
-  })();
-
-  const exportBtn = document.getElementById("exportServeBtn");
-  if (exportBtn) {
-    exportBtn.addEventListener("click", () => {
-      const blocks = [];
-      (model.serve || []).forEach((b, i) => {
-        const block = app.querySelectorAll(".code-block")[i];
-        const ta = block && block.querySelector(".code-editor");
-        if (ta && ta.value !== b.code) blocks.push({ index: i, title: b.title, code: ta.value });
-      });
-      if (!blocks.length) { alert("没有需要导出的修改（当前内容与默认脚本一致）"); return; }
-      const payload = { model_id: model.id, exported_at: new Date().toISOString(), blocks };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `${model.id}-serve-patch.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(a.href);
-    });
-  }
 })();

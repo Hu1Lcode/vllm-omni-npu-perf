@@ -153,11 +153,6 @@ a:hover { text-decoration: underline; }
   font-size: 1.25rem; font-weight: 700; margin-bottom: 16px;
   padding-bottom: 10px; border-bottom: 1px solid var(--border-soft);
 }
-.section-title-row {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border-soft);
-}
-.section-title-row .section-title { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
 .sec-no {
   font-family: var(--mono); font-size: 0.85rem; color: #081020; font-weight: 700;
   background: var(--grad); padding: 3px 10px; border-radius: 7px;
@@ -206,18 +201,6 @@ a:hover { text-decoration: underline; }
 }
 .code-block code { font-family: inherit; }
 
-/* 可编辑部署脚本 */
-.code-editor {
-  display: block; width: 100%; min-height: 140px; resize: vertical;
-  background: #0b1120; color: #c9d6ee;
-  border: none; outline: none;
-  font-family: var(--mono); font-size: 0.83rem; line-height: 1.7;
-  padding: 16px 18px;
-}
-.code-editor:focus { background: #0d1526; }
-.copy-btn.save-btn { color: var(--green); }
-.copy-btn.reset-btn { color: var(--amber); }
-.saved-badge { font-size: 0.75rem; color: var(--green); }
 .code-note { font-size: 0.85rem; color: var(--muted); margin: -8px 0 18px; }
 
 /* ---------- 性能数据表 ---------- */
