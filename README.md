@@ -88,6 +88,17 @@ perf: {
 
 主页「vLLM-Omni 特性清单」区块的数据在 `assets/js/data.js` 的 `window.FEATURES` 中：按分类组织（服务接口 / 推理加速 / 并行策略 / 显存优化与卸载 / 量化 / 功能扩展 / 昇腾 NPU 与运维），每项为 `{ name, desc, url }`，链接指向官方文档（docs.vllm.com.cn 镜像，与 docs.vllm.ai 路径一致）。新增特性只需在对应分类的 `items` 数组里加一条记录。
 
+## 部署脚本本地编辑
+
+详情页「部署推理脚本」的代码块可直接编辑，并支持保存：
+
+- **保存**：写入当前浏览器的 localStorage（按模型 + 脚本块），下次打开该详情页自动恢复你改过的内容；
+- **重置**：恢复为 `data.js` 中的默认脚本；
+- **复制**：复制文本框当前内容；
+- **导出修改 JSON**：章节标题右侧按钮，把与该模型默认脚本不一致的块导出为 `<模型id>-serve-patch.json`。
+
+> 注意：localStorage 的保存是「本浏览器」级别的，换浏览器/换机器不会带过去；要把改动正式落到网站仓库，请用「导出修改 JSON」导出后，交给维护者合并进 `assets/js/data.js` 对应模型的 `serve` 字段（或直接编辑 data.js）。
+
 ## 内容说明
 
 - 部署脚本与 API 示例取自 vLLM-Omni 官方文档（<https://docs.vllm.com.cn/projects/vllm-omni/en/latest/>）与官方 recipes（<https://recipes.vllm.ai/>、vllm-omni 仓库 `recipes/` 目录）。

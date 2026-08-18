@@ -43,19 +43,22 @@
     return `<span class="badge badge-npu no">NPU ✗ 暂不支持</span>`;
   }
 
-  /* ---------- 部署脚本代码块 ---------- */
+  /* ---------- 部署脚本代码块（可编辑 + 本地保存） ---------- */
   function serveBlocksHtml(serve) {
     return (serve || [])
-      .map((b) => {
+      .map((b, i) => {
         const note = b.note ? `<p class="code-note">${b.note}</p>` : "";
         return `
-          <div class="code-block">
+          <div class="code-block" data-block="${i}">
             <div class="code-head">
               <span class="cb-title">${esc(b.title || "脚本")}</span>
               <span class="cb-lang">${esc(b.lang || "text")}</span>
+              <span class="saved-badge" style="display:none">已保存 ✓</span>
               <button class="copy-btn" type="button">复制</button>
+              <button class="copy-btn save-btn" type="button">保存</button>
+              <button class="copy-btn reset-btn" type="button">重置</button>
             </div>
-            <pre><code>${esc(b.code)}</code></pre>
+            <textarea class="code-editor" spellcheck="false">${esc(b.code)}</textarea>
           </div>${note}`;
       })
       .join("");
@@ -115,7 +118,10 @@
     </section>
 
     <section class="section">
-      <h2 class="section-title"><span class="sec-no">03</span> 部署推理脚本</h2>
+      <div class="section-title-row">
+        <h2 class="section-title"><span class="sec-no">03</span> 部署推理脚本</h2>
+        <button class="copy-btn" id="exportServeBtn" type="button">导出修改 JSON</button>
+      </div>
       ${serveBlocksHtml(model.serve)}
     </section>
 
@@ -131,22 +137,24 @@
     </section>`;
 
   /* ---------- 复制按钮 ---------- */
-  app.querySelectorAll(".copy-btn").forEach((btn) => {
+  app.querySelectorAll(".code-block .copy-btn").forEach((btn) => {
+    if (btn.classList.contains("save-btn") || btn.classList.contains("reset-btn")) return;
     btn.addEventListener("click", async () => {
-      const code = btn.closest(".code-block").querySelector("code").innerText;
+      const ta = btn.closest(".code-block").querySelector(".code-editor");
+      const code = ta ? ta.value : "";
       let ok = false;
       try {
         await navigator.clipboard.writeText(code);
         ok = true;
       } catch (e) {
-        const ta = document.createElement("textarea");
-        ta.value = code;
-        ta.style.position = "fixed";
-        ta.style.opacity = "0";
-        document.body.appendChild(ta);
-        ta.select();
+        const t = document.createElement("textarea");
+        t.value = code;
+        t.style.position = "fixed";
+        t.style.opacity = "0";
+        document.body.appendChild(t);
+        t.select();
         try { ok = document.execCommand("copy"); } catch (e2) { ok = false; }
-        document.body.removeChild(ta);
+        document.body.removeChild(t);
       }
       if (ok) {
         btn.textContent = "已复制 ✓";
@@ -154,4 +162,60 @@
       }
     });
   });
+
+  /* ---------- 部署脚本本地编辑：保存 / 重置 / 导出 ---------- */
+  const storeKey = (i) => `vllmOmniNpu.serve.${model.id}.${i}`;
+  function storageGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function storageSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+  function storageRemove(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  function flash(btn, text) {
+    const orig = btn.textContent;
+    btn.textContent = text;
+    setTimeout(() => { btn.textContent = orig; }, 1200);
+  }
+
+  app.querySelectorAll(".code-block").forEach((block) => {
+    const i = parseInt(block.dataset.block, 10);
+    const ta = block.querySelector(".code-editor");
+    const badge = block.querySelector(".saved-badge");
+    const saved = storageGet(storeKey(i));
+    if (saved != null) { ta.value = saved; badge.style.display = "inline-flex"; }
+
+    block.querySelector(".save-btn").addEventListener("click", () => {
+      if (storageSet(storeKey(i), ta.value)) {
+        badge.style.display = "inline-flex";
+        flash(block.querySelector(".save-btn"), "已保存 ✓");
+      } else {
+        flash(block.querySelector(".save-btn"), "保存失败");
+      }
+    });
+    block.querySelector(".reset-btn").addEventListener("click", () => {
+      storageRemove(storeKey(i));
+      ta.value = (model.serve[i] || {}).code || "";
+      badge.style.display = "none";
+      flash(block.querySelector(".reset-btn"), "已重置");
+    });
+  });
+
+  const exportBtn = document.getElementById("exportServeBtn");
+  if (exportBtn) {
+    exportBtn.addEventListener("click", () => {
+      const blocks = [];
+      (model.serve || []).forEach((b, i) => {
+        const block = app.querySelectorAll(".code-block")[i];
+        const ta = block && block.querySelector(".code-editor");
+        if (ta && ta.value !== b.code) blocks.push({ index: i, title: b.title, code: ta.value });
+      });
+      if (!blocks.length) { alert("没有需要导出的修改（当前内容与默认脚本一致）"); return; }
+      const payload = { model_id: model.id, exported_at: new Date().toISOString(), blocks };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${model.id}-serve-patch.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    });
+  }
 })();
