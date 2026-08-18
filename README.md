@@ -23,7 +23,8 @@
 vllm-omni-npu-showcase/
 ├── index.html          # 主页：hero + 任务类型筛选 + 系列分组卡片墙
 ├── model.html          # 详情页统一模板（?id=模型id）
-├── server.py           # 可选静态服务 + 部署脚本同步（/api/scripts）
+├── server.py           # 可选静态服务 + 部署脚本/性能数据同步（/api/scripts、/api/perf）
+├── perf-data.json      # 性能数据持久化文件（页面经 server.py 读取）
 ├── scripts/
 │   ├── <模型id>.sh     # 每个模型的部署推理脚本（与详情页显示一致）
 │   └── generate_scripts.py  # 从 data.js 自动生成/校验 .sh 文件
@@ -108,6 +109,30 @@ python3 scripts/generate_scripts.py --check  # 只检查是否与 data.js 一致
 ```
 
 > 两种维护方式任选：直接编辑 `scripts/*.sh`（页面即时同步）；或改 `data.js` 的 `serve` 字段后重新生成覆盖。
+
+## 性能数据持久化（perf-data.json）
+
+所有模型的性能数据集中存放在项目根目录的 **`perf-data.json`**（推荐 JSON：浏览器原生解析、Python 零依赖、与 bench 工具链输出格式一致；如需 YAML 版可另行适配，服务端已具备 PyYAML）。
+
+**`perf-data.json` 是页面性能表的同步数据源**：通过 `server.py` 访问站点时，详情页会自动读取 `perf-data.json` 中该模型的行数据来渲染性能表（页面顶部显示「✓ 性能数据已与 perf-data.json 同步」）。**修改文件后刷新页面即可看到更新**；纯静态打开（无 server.py）时，页面使用 `data.js` 中的 rows 作为回退。
+
+文件格式（按模型 id 分组，每行为一个数组，列顺序与该模型 `data.js` 中 `perf.columns` 一致）：
+
+```json
+{
+  "minimax-h3": [
+    ["t2va", "1344x768", "124 帧 / 5s", "24", "50", "Ascend910（64GB HBM/卡）", "vllm-omni v0.26.0", "437.85", "备注"]
+  ]
+}
+```
+
+自动写入方式：压测后用 `fill_results.py` 回填（同时更新 perf-data.json 与 data.js 回退）：
+
+```bash
+python3 bench/fill_results.py results/minimax-h3.json
+```
+
+> 注意：`fill_results.py` 会用最新结果**覆盖**该模型的行；需要保留同一模型多个任务的多行数据时，直接在 `perf-data.json` 中追加即可。
 
 ## 内容说明
 
