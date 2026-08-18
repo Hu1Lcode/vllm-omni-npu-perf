@@ -6,7 +6,19 @@
   "wan22-t2v-a14b": [],
   "wan22-i2v-a14b": [],
   "wan22-ti2v-5b": [],
-  "minimax-h3": [],
+  "minimax-h3": [
+    [
+      "t2va",
+      "1344x768",
+      "124 帧 / 5s",
+      "24",
+      "50",
+      "Ascend910（64GB HBM/卡）",
+      "vllm-omni v0.26.0",
+      "437.85",
+      "t2va, duration 5s, seed 1101"
+    ]
+  ],
   "qwen-image-2512": [],
   "qwen-image-edit-2511": [],
   "qwen-image-layered": [],
