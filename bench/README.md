@@ -78,7 +78,7 @@ python3 bench/fill_results.py results/minimax-h3.json             # 写回 data.
 python3 bench/fill_results.py                                     # 回填 results/ 下全部
 ```
 
-行内容按每个模型 `perf.columns` 的列序自动映射：任务 / 分辨率 / 帧数 / 帧率 / 步数 / 机型 / 框架版本 / 端到端时间（或单张耗时）。
+行内容按每个模型 `perf.columns` 的列序自动映射：任务 / 分辨率 / 帧数 / 帧率 / 步数 / 机型 / 框架版本 / 端到端时间（或单张耗时）/ 备注（取 `--note` 参数）。
 
 ## 注意事项
 

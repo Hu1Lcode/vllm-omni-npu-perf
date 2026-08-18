@@ -86,6 +86,7 @@ def row_from_result(result, columns):
         "端到端时间 (s)": f"{avg_s:.2f}",
         "单张耗时 (s)": f"{avg_s:.2f}",
         "吞吐 (张/s)": c.get("throughput", ""),
+        "备注": result.get("note", ""),
     }
     return [js_string(values.get(col, "")) for col in columns]
 
