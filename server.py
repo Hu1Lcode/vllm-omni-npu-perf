@@ -21,8 +21,8 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SCRIPTS_DIR = os.path.join(ROOT, "scripts")
 
-# 只允许 <字母数字-_>.sh 的文件名，防止路径穿越
-SCRIPT_NAME_RE = re.compile(r"^[A-Za-z0-9_-]+\.sh$")
+# 只允许 <字母数字_- .>.sh 的文件名（模型 id 可能含小数点，如 wan21-t2v-1.3b），防止路径穿越
+SCRIPT_NAME_RE = re.compile(r"^[A-Za-z0-9_.-]+\.sh$")
 
 
 class Handler(SimpleHTTPRequestHandler):
