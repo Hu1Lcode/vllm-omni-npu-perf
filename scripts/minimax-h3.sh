@@ -33,16 +33,35 @@ vllm serve MiniMaxAI/MiniMax-H3 \
   --vae-patch-parallel-size 8 \
   --diffusion-attention-backend FLASH_ATTN
 
-# 注: 可选优化：--diffusion-attention-backend RAINFUSION_ATTN（保持 --ring 1）、export MINDIE_SD_FA_TYPE=ascend_laser_attention、T2VA 可用 --quantization int8。注意：不要加 --enforce-eager（regional compile 会在首个请求时预热）；CFG 已蒸馏，--cfg-parallel-size 必须保持 1。
+# 注: 可选优化：--diffusion-attention-backend RAINFUSION_ATTN（保持 --ring 1）、export MINDIE_SD_FA_TYPE=ascend_laser_attention、T2VA 可用 --quantization int8；HSDP 需配合 export MULTI_STREAM_MEMORY_REUSE=2。注意：不要加 --enforce-eager（regional compile 会在首个请求时预热）；CFG 已蒸馏，--cfg-parallel-size 必须保持 1。
 
-# ---------- 客户端调用 · /v1/videos/sync（t2va 文生视频+音频） ----------
+# ---------- 客户端调用 · /v1/videos/sync（t2va / fl2va / ref2va） ----------
 export API_URL="http://127.0.0.1:9098/v1/videos/sync"
+
+# T2VA（文生视频+音频）
 curl -sS -X POST "${API_URL}" \
-  -F 'prompt=In a snowy blue-purple forest, Ori carefully walks past a sleeping giant...' \
+  -F 'prompt=In a snowy blue-purple forest, Ori carefully walks past a sleeping giant; footsteps crunch in the snow while the creature breathes and softly snorts.' \
   -F 'width=1344' -F 'height=768' -F 'aspect_ratio=16:9' -F 'fps=24' \
   -F 'num_inference_steps=50' -F 'flow_shift=12' -F 'seed=1101' \
   -F 'extra_params={"task":"t2va","duration":8.7,"audio_flow_shift":3.0}' \
   -o t2va.mp4
 
-# 注: fl2va：加 -F 'input_reference=@首帧.png;type=image/png'（首尾帧可用多个 input_references + frame_indices=[0,-1]）；ref2va：图片/视频参考（input_reference，可重复）+ 可选音频参考 -F 'audio_reference={\
+# FL2VA（首帧驱动）：先 export FIRST_FRAME=/path/to/first_frame.png
+curl -sS -X POST "${API_URL}" \
+  -F 'prompt=A man stands beside a yellow car at night. The car drives away; he follows it with his eyes and begins singing sadly, with synchronized voice and city ambience.' \
+  -F 'fps=24' -F 'num_inference_steps=50' -F 'flow_shift=12' -F 'seed=2101' \
+  -F 'extra_params={"task":"fl2va","duration":8.7,"audio_flow_shift":3.0}' \
+  -F "input_reference=@${FIRST_FRAME};type=image/png" \
+  -o fl2va.mp4
+
+# REF2VA（参考图 + 音频）：音频需先起本地静态服务提供 URL
+curl -sS -X POST "${API_URL}" \
+  -F 'prompt=A white cat with black mustache and eyebrow markings sits on a beige couch, lip-syncing precisely to the complete reference audio.' \
+  -F 'width=1344' -F 'height=768' -F 'fps=24' -F 'num_inference_steps=50' -F 'flow_shift=12' -F 'seed=3101' \
+  -F 'extra_params={"task":"ref2va","duration":15.0,"audio_flow_shift":3.0}' \
+  -F "input_reference=@${REF_IMAGE};type=image/png" \
+  -F "audio_reference={\"audio_url\":\"${AUDIO_URL}\"}" \
+  -o ref2va.mp4
+
+# 注: 首尾帧 FL2VA：两个 input_references + extra_params frame_indices=[0,-1]；Ref2VA 引用上限：图像≤9、视频≤3、音频≤3、总数≤12；duration 4~15s、fps 固定 24。
 

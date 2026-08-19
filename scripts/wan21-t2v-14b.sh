@@ -9,8 +9,36 @@
 # ============================================================
 
 # ---------- 部署推理服务 · vllm serve ----------
+export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+
 # 基础启动
 vllm serve Wan-AI/Wan2.1-T2V-14B-Diffusers --omni --port 8091
+
+# 4卡启动 
+# sp2cfg2 tp2sp2 sp4fsdp
+export ASCEND_RT_VISIBLE_DEVICES=4,5,6,7,8,9,10,11
+vllm serve Wan-AI/Wan2.1-T2V-14B-Diffusers --omni \
+  --port 8091 \
+  --tensor-parallel-size 2 \
+  --usp 2 \
+  --cfg-parallel-size 2 \
+  --vae-use-tiling \
+  --vae-patch-parallel-size 8 \
+  --vae-parallel-mode spatial_shard_width
+  # --use-hsdp --hsdp-shard-size 4 \
+
+# 8卡启动 
+# tp2sp2cfg2 tp1sp4cfg2
+export ASCEND_RT_VISIBLE_DEVICES=4,5,6,7,8,9,10,11
+vllm serve Wan-AI/Wan2.1-T2V-14B-Diffusers --omni \
+  --port 8091 \
+  --tensor-parallel-size 2 \
+  --usp 2 \
+  --cfg-parallel-size 2 \
+  --vae-use-tiling \
+  --vae-patch-parallel-size 8 \
+  --vae-parallel-mode spatial_shard_width
 
 # 显存受限时可追加逐层卸载
 #   --enable-layerwise-offload
@@ -20,7 +48,7 @@ vllm serve Wan-AI/Wan2.1-T2V-14B-Diffusers --omni --port 8091
 # ---------- 客户端调用 · /v1/videos（异步任务） ----------
 curl -X POST http://localhost:8091/v1/videos \
   -F "prompt=A cinematic view of a futuristic city at sunset" \
-  -F "width=832" -F "height=480" -F "num_frames=33" -F "fps=16" \
+  -F "width=832" -F "height=480" -F "num_frames=81" -F "fps=16" \
   -F "negative_prompt=low quality, blurry, static" \
   -F "num_inference_steps=40" -F "guidance_scale=5.0" \
   -F "flow_shift=5.0" -F "seed=42"

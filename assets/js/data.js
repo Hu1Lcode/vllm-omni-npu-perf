@@ -476,19 +476,38 @@ vllm serve MiniMaxAI/MiniMax-H3 \\
   --vae-use-tiling \\
   --vae-patch-parallel-size 8 \\
   --diffusion-attention-backend FLASH_ATTN`,
-        note: "可选优化：--diffusion-attention-backend RAINFUSION_ATTN（保持 --ring 1）、export MINDIE_SD_FA_TYPE=ascend_laser_attention、T2VA 可用 --quantization int8。注意：不要加 --enforce-eager（regional compile 会在首个请求时预热）；CFG 已蒸馏，--cfg-parallel-size 必须保持 1。",
+        note: "可选优化：--diffusion-attention-backend RAINFUSION_ATTN（保持 --ring 1）、export MINDIE_SD_FA_TYPE=ascend_laser_attention、T2VA 可用 --quantization int8；HSDP 需配合 export MULTI_STREAM_MEMORY_REUSE=2。注意：不要加 --enforce-eager（regional compile 会在首个请求时预热）；CFG 已蒸馏，--cfg-parallel-size 必须保持 1。",
       },
       {
-        title: "客户端调用 · /v1/videos/sync（t2va 文生视频+音频）",
+        title: "客户端调用 · /v1/videos/sync（t2va / fl2va / ref2va）",
         lang: "bash",
         code: `export API_URL="http://127.0.0.1:9098/v1/videos/sync"
+
+# T2VA（文生视频+音频）
 curl -sS -X POST "\${API_URL}" \\
-  -F 'prompt=In a snowy blue-purple forest, Ori carefully walks past a sleeping giant...' \\
+  -F 'prompt=In a snowy blue-purple forest, Ori carefully walks past a sleeping giant; footsteps crunch in the snow while the creature breathes and softly snorts.' \\
   -F 'width=1344' -F 'height=768' -F 'aspect_ratio=16:9' -F 'fps=24' \\
   -F 'num_inference_steps=50' -F 'flow_shift=12' -F 'seed=1101' \\
   -F 'extra_params={"task":"t2va","duration":8.7,"audio_flow_shift":3.0}' \\
-  -o t2va.mp4`,
-        note: "fl2va：加 -F 'input_reference=@首帧.png;type=image/png'（首尾帧可用多个 input_references + frame_indices=[0,-1]）；ref2va：图片/视频参考（input_reference，可重复）+ 可选音频参考 -F 'audio_reference={\"audio_url\":\"...\"}'；任务通过 extra_params.task 指定。",
+  -o t2va.mp4
+
+# FL2VA（首帧驱动）：先 export FIRST_FRAME=/path/to/first_frame.png
+curl -sS -X POST "\${API_URL}" \\
+  -F 'prompt=A man stands beside a yellow car at night. The car drives away; he follows it with his eyes and begins singing sadly, with synchronized voice and city ambience.' \\
+  -F 'fps=24' -F 'num_inference_steps=50' -F 'flow_shift=12' -F 'seed=2101' \\
+  -F 'extra_params={"task":"fl2va","duration":8.7,"audio_flow_shift":3.0}' \\
+  -F "input_reference=@\${FIRST_FRAME};type=image/png" \\
+  -o fl2va.mp4
+
+# REF2VA（参考图 + 音频）：音频需先起本地静态服务提供 URL
+curl -sS -X POST "\${API_URL}" \\
+  -F 'prompt=A white cat with black mustache and eyebrow markings sits on a beige couch, lip-syncing precisely to the complete reference audio.' \\
+  -F 'width=1344' -F 'height=768' -F 'fps=24' -F 'num_inference_steps=50' -F 'flow_shift=12' -F 'seed=3101' \\
+  -F 'extra_params={"task":"ref2va","duration":15.0,"audio_flow_shift":3.0}' \\
+  -F "input_reference=@\${REF_IMAGE};type=image/png" \\
+  -F "audio_reference={\\"audio_url\\":\\"\${AUDIO_URL}\\"}" \\
+  -o ref2va.mp4`,
+        note: "首尾帧 FL2VA：两个 input_references + extra_params frame_indices=[0,-1]；Ref2VA 引用上限：图像≤9、视频≤3、音频≤3、总数≤12；duration 4~15s、fps 固定 24。",
       },
     ],
     perf: {
@@ -532,16 +551,25 @@ curl -sS -X POST "\${API_URL}" \\
         lang: "bash",
         code: `vllm serve Qwen/Qwen-Image-2512 --omni --port 8091
 
+# 逐步连续批处理（step-wise continuous batching）
+#   --step-execution --max-num-seqs 8
+
 # 显存受限时追加
 #   --vae-use-slicing --vae-use-tiling`,
       },
       {
         title: "客户端调用 · /v1/images/generations",
         lang: "bash",
-        code: `curl -X POST http://localhost:8091/v1/images/generations \\
+        code: `curl http://localhost:8091/v1/images/generations \\
   -H "Content-Type: application/json" \\
-  -d '{"prompt": "a cup of coffee on the table", "size": "1024x1024", "seed": 42}' \\
-  | jq -r '.data[0].b64_json' | base64 -d > coffee.png`,
+  -d '{
+    "model": "Qwen/Qwen-Image-2512",
+    "prompt": "A ceramic teapot on a wooden table",
+    "size": "1024x1024",
+    "num_inference_steps": 20,
+    "seed": 42
+  }' \\
+  | jq -r '.data[0].b64_json' | base64 -d > teapot.png`,
       },
     ],
     perf: {
@@ -549,6 +577,7 @@ curl -sS -X POST "\${API_URL}" \\
       rows: [],
     },
     refs: [
+      { label: "官方 recipe · Qwen-Image-2512", url: "https://github.com/vllm-project/vllm-omni/blob/main/recipes/Qwen/Qwen-Image-2512.md" },
       { label: "vLLM-Omni 文档 · 图像生成 API", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/serving/image_generation_api/" },
       { label: "recipes.vllm.ai · Qwen-Image", url: "https://recipes.vllm.ai/Qwen/Qwen-Image" },
       { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
@@ -581,6 +610,7 @@ curl -sS -X POST "\${API_URL}" \\
         title: "部署推理服务 · vllm serve",
         lang: "bash",
         code: `vllm serve Qwen/Qwen-Image-Edit-2511 --omni --port 8000`,
+        note: "官方 Qwen-Image-Edit recipe 仅覆盖基础版（多图变体明确不在 recipe 验证范围内），2511 的 API 形式与基础版一致。",
       },
       {
         title: "客户端调用 · /v1/chat/completions（多图编辑）",
@@ -789,9 +819,9 @@ vllm serve diffusers/LTX-2.3-Diffusers --omni \\
   --enable-layerwise-offload \\
   --stage-init-timeout 600
 
-# 两阶段（全蒸馏）
+# 两阶段（全蒸馏；LTX2DistilledPipeline 为已废弃别名）
 vllm serve diffusers/LTX-2.3-Distilled-Diffusers --omni \\
-  --model-class-name LTX2DistilledPipeline --stage-init-timeout 600
+  --model-class-name LTX2DistilledTwoStagePipeline --stage-init-timeout 600
 
 # CFG 并行（2 卡）
 vllm serve diffusers/LTX-2.3-Diffusers --omni \\
@@ -799,19 +829,23 @@ vllm serve diffusers/LTX-2.3-Diffusers --omni \\
         note: "建议 96GB 级 GPU，或使用 CPU/逐层卸载；num_frames 需为 8k+1，两阶段管线尺寸需被 64 整除。官方矩阵未列入 NPU。",
       },
       {
-        title: "客户端调用 · /v1/videos/sync（文生视频）",
+        title: "客户端调用 · /v1/videos/sync（T2V / I2V）",
         lang: "bash",
-        code: `curl -X POST http://localhost:8000/v1/videos/sync \\
+        code: `# T2V（文生视频）
+curl -X POST http://localhost:8000/v1/videos/sync \\
   -F "prompt=A cinematic close-up of ocean waves at golden hour." \\
   -F "negative_prompt=worst quality, inconsistent motion, blurry, jittery, distorted" \\
-  -F "size=768x512" \\
-  -F "num_frames=121" \\
-  -F "fps=24" \\
-  -F "seed=42" \\
+  -F "size=768x512" -F "num_frames=121" -F "fps=24" -F "seed=42" \\
   -o ltx_t2v.mp4
 
-# 图生视频追加一行（与 URL 形式 image_reference 二选一）
-#   -F "input_reference=@/absolute/path/to/reference.png"`,
+# I2V（恰好一张初始图；URL 引用用 image_reference，不可同时给）
+curl -X POST http://localhost:8000/v1/videos/sync \\
+  -F "prompt=A plush toy astronaut gently waving while the camera slowly pushes in." \\
+  -F "negative_prompt=worst quality, inconsistent motion, blurry, jittery, distorted" \\
+  -F "input_reference=@/absolute/path/to/reference.png" \\
+  -F "size=768x512" -F "num_frames=121" -F "fps=24" -F "seed=42" \\
+  -o ltx_i2v.mp4`,
+        note: "num_frames 必须为 8k+1（在线 API 默认 1，需显式设置）；视频 CFG 3.0 / 音频 CFG 7.0 可经 extra_params 传（如 video_cfg_scale=3.0、audio_cfg_scale=7.0）。",
       },
     ],
     perf: {
@@ -831,14 +865,14 @@ vllm serve diffusers/LTX-2.3-Diffusers --omni \\
     series: "lingbot",
     seriesName: "LingBot-Video 系列",
     org: "Robbyant",
-    tasks: ["文生图", "文生视频", "图生视频"],
+    tasks: ["文生视频"],
     params: "1.3B（稠密 DiT）",
     hfRepo: "robbyant/lingbot-video-dense-1.3b",
     npu: false,
     npuNote: "官方矩阵未列入 NPU",
-    summary: "统一 T2I / T2V / TI2V 的稠密 DiT",
+    summary: "T2V 文生视频（官方当前实现仅支持 T2V）",
     intro: `
-      <p><strong>LingBot-Video</strong> 是 Robbyant 开源的统一视觉生成模型：同一权重支持文生图（T2I）、文生视频（T2V）与图文生视频（TI2V）。<strong>Dense-1.3B</strong> 为稠密 DiT 版本。</p>
+      <p><strong>LingBot-Video</strong> 是 Robbyant 开源的视觉生成模型，<strong>Dense-1.3B</strong> 为稠密 DiT 版本。<strong>注意：</strong>当前官方 recipe 仅支持文生视频（T2V），T2I / I2V / TI2V 尚未实现。</p>
       <p><strong>注意：</strong>官方 recipe 仅验证 CUDA 单卡路径，支持矩阵仅标注 NVIDIA GPU，<strong>暂未列入 NPU</strong>。</p>
     `,
     arch: {
@@ -861,7 +895,7 @@ vllm serve robbyant/lingbot-video-dense-1.3b \\
         note: "官方 recipe 仅验证 CUDA 单卡路径；多卡并行、Cache-DiT、量化、CPU 卸载未验证。官方矩阵未列入 NPU。",
       },
       {
-        title: "客户端调用 · /v1/videos（异步任务）",
+        title: "客户端调用 · /v1/videos（异步任务，仅 T2V）",
         lang: "bash",
         code: `create_response=$(curl -s http://localhost:8091/v1/videos \\
   -F "model=robbyant/lingbot-video-dense-1.3b" \\
@@ -869,10 +903,17 @@ vllm serve robbyant/lingbot-video-dense-1.3b \\
   -F "width=320" -F "height=192" -F "num_frames=9" -F "fps=24" \\
   -F "num_inference_steps=2" -F "guidance_scale=3.0" -F "flow_shift=3.0" \\
   -F "seed=42")
-video_id=$(echo "$create_response" | jq -r '.id')
-curl -L "http://localhost:8091/v1/videos/\${video_id}/content" -o lingbot_t2v.mp4
 
-# 另支持 T2I（/v1/images 路由）与 TI2V（追加 input_reference 参考图）`,
+video_id=$(echo "$create_response" | jq -r '.id')
+while true; do
+  status=$(curl -s "http://localhost:8091/v1/videos/\${video_id}" | jq -r '.status')
+  [ "\${status}" = "completed" ] && break
+  [ "\${status}" = "failed" ] && { curl -s "http://localhost:8091/v1/videos/\${video_id}" | jq .; exit 1; }
+  sleep 2
+done
+
+curl -L "http://localhost:8091/v1/videos/\${video_id}/content" -o lingbot_t2v.mp4`,
+        note: "当前官方 recipe 仅支持 T2V（T2I / I2V / TI2V 未实现）；height/width 需为 16 的倍数，num_frames 为 1 或 4n+1。",
       },
     ],
     perf: {
@@ -891,14 +932,14 @@ curl -L "http://localhost:8091/v1/videos/\${video_id}/content" -o lingbot_t2v.mp
     series: "lingbot",
     seriesName: "LingBot-Video 系列",
     org: "Robbyant",
-    tasks: ["文生图", "文生视频", "图生视频"],
+    tasks: ["文生视频"],
     params: "30B（A3B 路由 MoE，3B 激活）",
     hfRepo: "robbyant/lingbot-video-moe-30b-a3b",
     npu: false,
     npuNote: "官方矩阵未列入 NPU",
-    summary: "统一 T2I / T2V / TI2V 的路由 MoE",
+    summary: "T2V 文生视频的路由 MoE（官方当前实现仅支持 T2V）",
     intro: `
-      <p><strong>LingBot-Video-MoE-30B-A3B</strong> 是 LingBot-Video 的路由 MoE 版本：总参数 30B、单 token 激活 3B，同样统一支持 T2I / T2V / TI2V。</p>
+      <p><strong>LingBot-Video-MoE-30B-A3B</strong> 是 LingBot-Video 的路由 MoE 版本：总参数 30B、单 token 激活 3B。<strong>注意：</strong>当前官方 recipe 仅支持文生视频（T2V），T2I / I2V / TI2V 尚未实现。</p>
       <p><strong>注意：</strong>官方 recipe 仅验证 CUDA 单卡 BF16 路径（峰值约 70 GiB 显存），支持矩阵仅标注 NVIDIA GPU，<strong>暂未列入 NPU</strong>。</p>
     `,
     arch: {
@@ -921,7 +962,7 @@ vllm serve robbyant/lingbot-video-moe-30b-a3b \\
         note: "MoE checkpoint 峰值约 67.7 GiB 显存，建议 ≥70 GiB 显存的 GPU。官方矩阵未列入 NPU。",
       },
       {
-        title: "客户端调用 · /v1/videos（异步任务）",
+        title: "客户端调用 · /v1/videos（异步任务，仅 T2V）",
         lang: "bash",
         code: `create_response=$(curl -s http://localhost:8091/v1/videos \\
   -F "model=robbyant/lingbot-video-moe-30b-a3b" \\
@@ -929,8 +970,17 @@ vllm serve robbyant/lingbot-video-moe-30b-a3b \\
   -F "width=320" -F "height=192" -F "num_frames=9" -F "fps=24" \\
   -F "num_inference_steps=2" -F "guidance_scale=3.0" -F "flow_shift=3.0" \\
   -F "seed=42")
+
 video_id=$(echo "$create_response" | jq -r '.id')
+while true; do
+  status=$(curl -s "http://localhost:8091/v1/videos/\${video_id}" | jq -r '.status')
+  [ "\${status}" = "completed" ] && break
+  [ "\${status}" = "failed" ] && { curl -s "http://localhost:8091/v1/videos/\${video_id}" | jq .; exit 1; }
+  sleep 2
+done
+
 curl -L "http://localhost:8091/v1/videos/\${video_id}/content" -o lingbot_moe_t2v.mp4`,
+        note: "当前官方 recipe 仅支持 T2V（T2I / I2V / TI2V 未实现）；height/width 需为 16 的倍数，num_frames 为 1 或 4n+1。",
       },
     ],
     perf: {
@@ -1118,6 +1168,7 @@ vllm serve hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-720p_t2v --omni \\
     },
     refs: [
       { label: "在线服务脚本 · run_server_hunyuan_video_15.sh", url: "https://github.com/vllm-project/vllm-omni/blob/main/examples/online_serving/text_to_video/run_server_hunyuan_video_15.sh" },
+      { label: "在线调用脚本 · run_curl_hunyuan_video_15.sh", url: "https://github.com/vllm-project/vllm-omni/blob/main/examples/online_serving/text_to_video/run_curl_hunyuan_video_15.sh" },
       { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
     ],
   },
@@ -1176,6 +1227,7 @@ vllm serve hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-720p_i2v --omni \\
     },
     refs: [
       { label: "在线服务脚本 · run_server_hunyuan_video_15.sh（I2V）", url: "https://github.com/vllm-project/vllm-omni/blob/main/examples/online_serving/image_to_video/run_server_hunyuan_video_15.sh" },
+      { label: "在线调用脚本 · run_curl_hunyuan_video_15.sh（I2V）", url: "https://github.com/vllm-project/vllm-omni/blob/main/examples/online_serving/image_to_video/run_curl_hunyuan_video_15.sh" },
       { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
     ],
   },
@@ -1220,7 +1272,7 @@ vllm serve nvidia/Cosmos3-Super \\
         note: "官方 NPU recipe（8× Ascend910 A2/A3）验证：T2I 256²/2 步约 1.5s；NPU 上 FP8 量化未验证、--enable-layerwise-offload 未测试。",
       },
       {
-        title: "客户端调用 · /v1/videos/sync（T2V）",
+        title: "客户端调用 · /v1/videos/sync（T2V / I2V）",
         lang: "bash",
         code: `# T2V（1280×720，189 帧，35 步）
 curl -sS -X POST http://localhost:8000/v1/videos/sync -H "Accept: video/mp4" \\
@@ -1230,10 +1282,19 @@ curl -sS -X POST http://localhost:8000/v1/videos/sync -H "Accept: video/mp4" \\
   -F 'extra_params={"use_resolution_template":false,"use_duration_template":false,"guardrails":false}' \\
   -F "seed=17" -o cosmos3_super_t2v.mp4
 
+# I2V（参考图）
+curl -sS -X POST http://localhost:8000/v1/videos/sync -H "Accept: video/mp4" \\
+  -F "model=nvidia/Cosmos3-Super" -F "prompt=The scene comes to life with smooth, natural motion." \\
+  -F "size=1280x720" -F "num_frames=189" -F "fps=24" -F "num_inference_steps=35" \\
+  -F "guidance_scale=6.0" -F "max_sequence_length=4096" -F "flow_shift=10.0" \\
+  -F 'extra_params={"use_resolution_template":false,"use_duration_template":false,"guardrails":false}' \\
+  -F "seed=1111" -F "input_reference=@/path/to/reference.jpg;type=image/jpeg" \\
+  -o cosmos3_super_i2v.mp4
+
 # T2V + 声音：追加 -F "generate_sound=true" -F "sound_duration=7.875"
-# I2V：追加 -F "input_reference=@参考图.jpg;type=image/jpeg"
-# V2V：追加 -F "input_reference=@参考视频.mp4;type=video/mp4"
+# V2V：input_reference 改为参考视频（type=video/mp4），extra_params 加 condition_frame_indexes_vision / condition_video_keep
 # T2I：POST /v1/images/generations（size=1024x1024，50 步，guidance_scale=7.0）`,
+        note: "guardrails 默认开启（需 cosmos-guardrail + HF_TOKEN），--no-guardrails 或 extra_params guardrails:false 关闭；NPU 上 FP8 量化未验证、--enable-layerwise-offload 未测试。",
       },
     ],
     perf: {

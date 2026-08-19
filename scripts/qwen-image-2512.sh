@@ -11,12 +11,21 @@
 # ---------- 部署推理服务 · vllm serve ----------
 vllm serve Qwen/Qwen-Image-2512 --omni --port 8091
 
+# 逐步连续批处理（step-wise continuous batching）
+#   --step-execution --max-num-seqs 8
+
 # 显存受限时追加
 #   --vae-use-slicing --vae-use-tiling
 
 # ---------- 客户端调用 · /v1/images/generations ----------
-curl -X POST http://localhost:8091/v1/images/generations \
+curl http://localhost:8091/v1/images/generations \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "a cup of coffee on the table", "size": "1024x1024", "seed": 42}' \
-  | jq -r '.data[0].b64_json' | base64 -d > coffee.png
+  -d '{
+    "model": "Qwen/Qwen-Image-2512",
+    "prompt": "A ceramic teapot on a wooden table",
+    "size": "1024x1024",
+    "num_inference_steps": 20,
+    "seed": 42
+  }' \
+  | jq -r '.data[0].b64_json' | base64 -d > teapot.png
 

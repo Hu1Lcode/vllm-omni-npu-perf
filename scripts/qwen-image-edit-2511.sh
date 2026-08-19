@@ -11,6 +11,8 @@
 # ---------- 部署推理服务 · vllm serve ----------
 vllm serve Qwen/Qwen-Image-Edit-2511 --omni --port 8000
 
+# 注: 官方 Qwen-Image-Edit recipe 仅覆盖基础版（多图变体明确不在 recipe 验证范围内），2511 的 API 形式与基础版一致。
+
 # ---------- 客户端调用 · /v1/chat/completions（多图编辑） ----------
 curl -s http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \

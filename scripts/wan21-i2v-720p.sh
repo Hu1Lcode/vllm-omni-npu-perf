@@ -9,14 +9,36 @@
 # ============================================================
 
 # ---------- 部署推理服务 · vllm serve ----------
-# 基础启动（HF 仓库）
+export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+
+# 基础启动
 vllm serve Wan-AI/Wan2.1-I2V-14B-720P --omni --port 8091
 
-# 多卡示例（tp2sp2cfg2，参照本地实测）
-vllm serve /path/to/Wan2.1-I2V-14B-720P --omni \
+# 4卡启动 
+# sp2cfg2 tp2sp2 sp4fsdp
+export ASCEND_RT_VISIBLE_DEVICES=4,5,6,7,8,9,10,11
+vllm serve Wan-AI/Wan2.1-I2V-14B-720P --omni \
   --port 8091 \
-  --usp 2 --cfg-parallel-size 2 \
-  --vae-patch-parallel-size 8 --vae-use-tiling
+  --tensor-parallel-size 2 \
+  --usp 2 \
+  --cfg-parallel-size 2 \
+  --vae-use-tiling \
+  --vae-patch-parallel-size 8 \
+  --vae-parallel-mode spatial_shard_width
+  # --use-hsdp --hsdp-shard-size 4 \
+
+# 8卡启动 
+# tp2sp2cfg2 tp1sp4cfg2
+export ASCEND_RT_VISIBLE_DEVICES=4,5,6,7,8,9,10,11
+vllm serve Wan-AI/Wan2.1-I2V-14B-720P --omni \
+  --port 8091 \
+  --tensor-parallel-size 2 \
+  --usp 2 \
+  --cfg-parallel-size 2 \
+  --vae-use-tiling \
+  --vae-patch-parallel-size 8 \
+  --vae-parallel-mode spatial_shard_width
 
 # 注: 官方文档未提供 Wan2.1-I2V 的 serve 示例（矩阵未列出），命令参照 Wan2.1-T2V 模式；参数以本地实测为准，可直接编辑 scripts/wan21-i2v-720p.sh 同步页面。
 
@@ -24,7 +46,7 @@ vllm serve /path/to/Wan2.1-I2V-14B-720P --omni \
 curl -X POST http://localhost:8091/v1/videos \
   -F "prompt=The cat turns its head to look at the camera" \
   -F "input_reference=@/path/to/reference.png" \
-  -F "width=1280" -F "height=720" -F "num_frames=33" -F "fps=16" \
+  -F "width=1280" -F "height=720" -F "num_frames=81" -F "fps=16" \
   -F "num_inference_steps=40" -F "guidance_scale=5.0" \
   -F "flow_shift=5.0" -F "seed=42"
 

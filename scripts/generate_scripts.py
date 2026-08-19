@@ -168,9 +168,13 @@ def render_sh(model):
 def main():
     ap = argparse.ArgumentParser(description="生成 scripts/<模型id>.sh")
     ap.add_argument("--check", action="store_true", help="只检查与现有文件是否一致，不写盘")
+    ap.add_argument("--only", default="", help="只处理指定模型 id（逗号分隔），其余不动（保护手改的脚本）")
     args = ap.parse_args()
 
     models = parse_models()
+    if args.only:
+        only = {x.strip() for x in args.only.split(",") if x.strip()}
+        models = [m for m in models if m["id"] in only]
     model_ids = {m["id"] for m in models}
     os.makedirs(OUT_DIR, exist_ok=True)
     changed = 0
@@ -185,18 +189,19 @@ def main():
         with open(path, "w", encoding="utf-8") as f:
             f.write(content)
         os.chmod(path, 0o755)
-    # 清理已从 data.js 移除的模型的孤儿 .sh 文件
-    for name in sorted(os.listdir(OUT_DIR)):
-        if not name.endswith(".sh"):
-            continue
-        if name[:-3] not in model_ids:
-            path = os.path.join(OUT_DIR, name)
-            if args.check:
-                print(f"[check] 孤儿文件（data.js 中已无此模型）: {path}")
-                changed += 1
-            else:
-                os.remove(path)
-                print(f"已删除孤儿脚本: {name}")
+    # 清理已从 data.js 移除的模型的孤儿 .sh 文件（--only 模式下跳过，避免误删未选中的手改脚本）
+    if not args.only:
+        for name in sorted(os.listdir(OUT_DIR)):
+            if not name.endswith(".sh"):
+                continue
+            if name[:-3] not in model_ids:
+                path = os.path.join(OUT_DIR, name)
+                if args.check:
+                    print(f"[check] 孤儿文件（data.js 中已无此模型）: {path}")
+                    changed += 1
+                else:
+                    os.remove(path)
+                    print(f"已删除孤儿脚本: {name}")
     print(f"{'检查完成' if args.check else '生成完成'}: {len(models)} 个模型 -> {OUT_DIR}"
           + (f"，{changed} 个不一致" if args.check else ""))
     if args.check and changed:
