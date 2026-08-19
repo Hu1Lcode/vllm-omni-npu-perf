@@ -15,12 +15,15 @@ export TASK_QUEUE_ENABLE=2
 # 基础启动
 vllm serve Wan-AI/Wan2.1-T2V-1.3B-Diffusers --omni --port 8091
 
-# 推荐部署方式
+# 推荐部署方式 
+# tp2sp2cfg2 tp1sp4cfg2
 export ASCEND_RT_VISIBLE_DEVICES=4,5,6,7,8,9,10,11
-vllm serve Wan-AI/Wan2.1-T2V-1.3B-Diffusers --omni \
+vllm serve /home/wjh/models/Wan2.1_T2V_1.3B --omni \
   --port 8091 \
   --tensor-parallel-size 2 \
-  --vae-patch-parallel-size 2 \
+  --usp 2 \
+  --cfg-parallel-size 2 \
+  --vae-patch-parallel-size 8 \
   --vae-parallel-mode spatial_shard_width
 
 # 注: 官方在线服务示例页的完整命令以 Wan2.2 为例，Wan2.1 使用同一 WanPipeline 入口；参数以官方文档为准。

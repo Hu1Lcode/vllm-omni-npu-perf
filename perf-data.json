@@ -16,7 +16,7 @@
       "Ascend910（64GB HBM/卡）",
       "vllm-omni v0.26.0",
       "437.85",
-      "t2va, duration 5s, seed 1101"
+      "tp2sp2cfg2"
     ]
   ],
   "qwen-image-2512": [],
