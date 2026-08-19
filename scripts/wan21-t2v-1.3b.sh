@@ -9,21 +9,13 @@
 # ============================================================
 
 # ---------- 部署推理服务 · vllm serve ----------
-export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
-export TASK_QUEUE_ENABLE=2
-
 # 基础启动
 vllm serve Wan-AI/Wan2.1-T2V-1.3B-Diffusers --omni --port 8091
 
-# 推荐部署方式 
-# tp2sp2cfg2 tp1sp4cfg2
-export ASCEND_RT_VISIBLE_DEVICES=4,5,6,7,8,9,10,11
-vllm serve /home/wjh/models/Wan2.1_T2V_1.3B --omni \
-  --port 8091 \
+# VAE 并行示例（官方 VAE 并行文档）
+vllm serve Wan-AI/Wan2.1-T2V-1.3B-Diffusers --omni \
   --tensor-parallel-size 2 \
-  --usp 2 \
-  --cfg-parallel-size 2 \
-  --vae-patch-parallel-size 8 \
+  --vae-patch-parallel-size 2 \
   --vae-parallel-mode spatial_shard_width
 
 # 注: 官方在线服务示例页的完整命令以 Wan2.2 为例，Wan2.1 使用同一 WanPipeline 入口；参数以官方文档为准。
@@ -31,7 +23,7 @@ vllm serve /home/wjh/models/Wan2.1_T2V_1.3B --omni \
 # ---------- 客户端调用 · /v1/videos（异步任务） ----------
 curl -X POST http://localhost:8091/v1/videos \
   -F "prompt=A cinematic view of a futuristic city at sunset" \
-  -F "width=832" -F "height=480" -F "num_frames=81" -F "fps=16" \
+  -F "width=832" -F "height=480" -F "num_frames=33" -F "fps=16" \
   -F "negative_prompt=low quality, blurry, static" \
   -F "num_inference_steps=40" -F "guidance_scale=5.0" \
   -F "flow_shift=5.0" -F "seed=42"

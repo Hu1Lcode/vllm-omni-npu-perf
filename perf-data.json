@@ -1,8 +1,6 @@
 {
   "wan21-t2v-1.3b": [],
   "wan21-t2v-14b": [],
-  "wan21-vace-1.3b": [],
-  "wan21-vace-14b": [],
   "wan22-t2v-a14b": [],
   "wan22-i2v-a14b": [],
   "wan22-ti2v-5b": [],
@@ -31,5 +29,7 @@
   "longcat-image-edit": [],
   "hunyuanvideo-1.5-t2v": [],
   "hunyuanvideo-1.5-i2v": [],
-  "cosmos3-super": []
+  "cosmos3-super": [],
+  "wan21-i2v-480p": [],
+  "wan21-i2v-720p": []
 }

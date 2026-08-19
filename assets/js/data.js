@@ -126,39 +126,50 @@ vllm serve Wan-AI/Wan2.1-T2V-14B-Diffusers --omni --port 8091
     ],
   },
   {
-    id: "wan21-vace-1.3b",
-    name: "Wan2.1-VACE-1.3B",
+    id: "wan21-i2v-480p",
+    name: "Wan2.1-I2V-14B-480P",
     series: "wan21",
     seriesName: "Wan 2.1 系列",
     org: "Wan-AI",
-    tasks: ["文生视频", "图生视频"],
-    params: "1.3B",
-    hfRepo: "Wan-AI/Wan2.1-VACE-1.3B-diffusers",
-    npu: true,
-    npuNote: "",
-    summary: "视频生成与编辑一体模型（V2LF / FLF2V / Inpainting / R2V）",
+    tasks: ["图生视频"],
+    params: "14B（稠密）",
+    hfRepo: "Wan-AI/Wan2.1-I2V-14B-480P",
+    npu: "unverified",
+    npuNote: "官方矩阵未列出，本地实测为准",
+    summary: "参考图像驱动的图生视频（480P）",
     intro: `
-      <p><strong>Wan2.1-VACE</strong>（Video All-in-one Creation and Editing）是 Wan 2.1 的统一视频生成与编辑模型：在单一生主干上支持文生视频（T2V）、图生视频（I2V）、视频生尾帧（V2LF）、首尾帧生视频（FLF2V）、视频补绘（Inpainting）与参考生视频（R2V）等任务。</p>
-      <p>官方支持矩阵标注其在昇腾 NPU 上<strong>支持</strong>。1.3B 版本在 RTX 5090 上验证：81 帧 T2V 峰值显存约 20 GiB（含 VAE tiling）。</p>
+      <p><strong>Wan2.1-I2V-14B-480P</strong> 是 Wan 2.1 的图生视频模型：输入一张参考图像 + 文本提示词，生成与之语义一致的 480P 视频。</p>
+      <p><strong>注意：</strong>官方 vllm-omni 支持矩阵未列出 Wan2.1-I2V（图生视频仅记录 Wan2.2-I2V-A14B），本站在 NPU 上的支持状态以<strong>本地实测为准</strong>。</p>
     `,
     arch: {
       text: `
-        <p>在 Wan2.1 DiT 主干（3D 因果 VAE + 文本编码器 + Flow Matching）上引入视频条件与多任务能力，一个权重覆盖生成与编辑全任务。</p>
-        <p>数据流：文本/参考视频（首尾帧）/参考图 → VAE 编码 → DiT → VAE 解码 → 目标视频。</p>
+        <p>与 Wan2.1-T2V 相同的 3D 因果视频 VAE + T2V 文本编码器 + DiT 主干（Flow Matching 调度），差异在于参考图像经 VAE 编码后作为条件注入。</p>
+        <p>数据流：参考图像（VAE 编码）+ 文本提示词 → DiT 去噪 → VAE 解码 → 视频帧。</p>
       `,
     },
     serve: [
       {
-        title: "离线推理示例（官方 recipe）",
+        title: "部署推理服务 · vllm serve",
         lang: "bash",
-        code: `python examples/offline_inference/text_to_video/text_to_video.py \\
-  --model Wan-AI/Wan2.1-VACE-1.3B-diffusers \\
-  --prompt "A sleek, humanoid robot stands in a vast warehouse filled with neatly stacked cardboard boxes." \\
-  --seed 0 \\
-  --height 480 --width 832 --num-frames 81 --num-inference-steps 30 \\
-  --guidance-scale 5.0 --flow-shift 5.0 --vae-use-tiling \\
-  --output t2v.mp4`,
-        note: "官方 recipe 未提供专用 serve 命令；在线服务使用标准 --omni 入口（vllm serve Wan-AI/Wan2.1-VACE-1.3B-diffusers --omni）。",
+        code: `# 基础启动（HF 仓库）
+vllm serve Wan-AI/Wan2.1-I2V-14B-480P --omni --port 8091
+
+# 多卡示例（tp2sp2cfg2，参照本地实测）
+vllm serve /path/to/Wan2.1-I2V-14B-480P --omni \\
+  --port 8091 \\
+  --usp 2 --cfg-parallel-size 2 \\
+  --vae-patch-parallel-size 8 --vae-use-tiling`,
+        note: "官方文档未提供 Wan2.1-I2V 的 serve 示例（矩阵未列出），命令参照 Wan2.1-T2V 模式；参数以本地实测为准，可直接编辑 scripts/wan21-i2v-480p.sh 同步页面。",
+      },
+      {
+        title: "客户端调用 · /v1/videos（图生视频）",
+        lang: "bash",
+        code: `curl -X POST http://localhost:8091/v1/videos \\
+  -F "prompt=The cat turns its head to look at the camera" \\
+  -F "input_reference=@/path/to/reference.png" \\
+  -F "width=832" -F "height=480" -F "num_frames=33" -F "fps=16" \\
+  -F "num_inference_steps=40" -F "guidance_scale=5.0" \\
+  -F "flow_shift=5.0" -F "seed=42"`,
       },
     ],
     perf: {
@@ -166,44 +177,55 @@ vllm serve Wan-AI/Wan2.1-T2V-14B-Diffusers --omni --port 8091
       rows: [],
     },
     refs: [
-      { label: "官方 recipe · Wan2.1-VACE", url: "https://github.com/vllm-project/vllm-omni/blob/main/recipes/Wan-AI/Wan2.1-VACE.md" },
+      { label: "HuggingFace · Wan2.1-I2V-14B-480P", url: "https://huggingface.co/Wan-AI/Wan2.1-I2V-14B-480P" },
       { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
     ],
   },
   {
-    id: "wan21-vace-14b",
-    name: "Wan2.1-VACE-14B",
+    id: "wan21-i2v-720p",
+    name: "Wan2.1-I2V-14B-720P",
     series: "wan21",
     seriesName: "Wan 2.1 系列",
     org: "Wan-AI",
-    tasks: ["文生视频", "图生视频"],
-    params: "14B",
-    hfRepo: "Wan-AI/Wan2.1-VACE-14B-diffusers",
-    npu: true,
-    npuNote: "",
-    summary: "视频生成与编辑一体模型（14B 旗舰）",
+    tasks: ["图生视频"],
+    params: "14B（稠密）",
+    hfRepo: "Wan-AI/Wan2.1-I2V-14B-720P",
+    npu: "unverified",
+    npuNote: "官方矩阵未列出，本地实测为准",
+    summary: "参考图像驱动的图生视频（720P）",
     intro: `
-      <p><strong>Wan2.1-VACE-14B</strong> 是 VACE 的 14B 版本：统一支持文生视频（T2V）、图生视频（I2V）、视频生尾帧（V2LF）、首尾帧生视频（FLF2V）、视频补绘（Inpainting）与参考生视频（R2V）。</p>
-      <p>官方支持矩阵标注其在昇腾 NPU 上<strong>支持</strong>。14B 权重约需 70 GiB 磁盘空间，官方在单卡 48 GiB L40S 上以 VAE tiling + 逐层卸载验证。</p>
+      <p><strong>Wan2.1-I2V-14B-720P</strong> 是 Wan 2.1 的图生视频模型：输入一张参考图像 + 文本提示词，生成与之语义一致的 720P 视频。</p>
+      <p><strong>注意：</strong>官方 vllm-omni 支持矩阵未列出 Wan2.1-I2V（图生视频仅记录 Wan2.2-I2V-A14B），本站在 NPU 上的支持状态以<strong>本地实测为准</strong>。</p>
     `,
     arch: {
       text: `
-        <p>与 VACE-1.3B 相同的多任务架构：Wan2.1 DiT 主干（3D 因果 VAE + 文本编码器 + Flow Matching）+ 视频条件与多任务能力。</p>
-        <p>数据流：文本/参考视频（首尾帧）/参考图 → VAE 编码 → DiT → VAE 解码 → 目标视频。</p>
+        <p>与 Wan2.1-T2V 相同的 3D 因果视频 VAE + T2V 文本编码器 + DiT 主干（Flow Matching 调度），差异在于参考图像经 VAE 编码后作为条件注入。</p>
+        <p>数据流：参考图像（VAE 编码）+ 文本提示词 → DiT 去噪 → VAE 解码 → 视频帧。</p>
       `,
     },
     serve: [
       {
-        title: "离线推理示例（官方 recipe）",
+        title: "部署推理服务 · vllm serve",
         lang: "bash",
-        code: `python examples/offline_inference/text_to_video/text_to_video.py \\
-  --model Wan-AI/Wan2.1-VACE-14B-diffusers \\
-  --prompt "A sleek, humanoid robot stands in a vast warehouse filled with neatly stacked cardboard boxes." \\
-  --seed 0 \\
-  --height 480 --width 832 --num-frames 81 --num-inference-steps 30 \\
-  --guidance-scale 5.0 --flow-shift 5.0 --vae-use-tiling --enable-layerwise-offload \\
-  --output t2v.mp4`,
-        note: "官方 recipe 未提供专用 serve 命令；在线服务使用标准 --omni 入口（vllm serve Wan-AI/Wan2.1-VACE-14B-diffusers --omni）。",
+        code: `# 基础启动（HF 仓库）
+vllm serve Wan-AI/Wan2.1-I2V-14B-720P --omni --port 8091
+
+# 多卡示例（tp2sp2cfg2，参照本地实测）
+vllm serve /path/to/Wan2.1-I2V-14B-720P --omni \\
+  --port 8091 \\
+  --usp 2 --cfg-parallel-size 2 \\
+  --vae-patch-parallel-size 8 --vae-use-tiling`,
+        note: "官方文档未提供 Wan2.1-I2V 的 serve 示例（矩阵未列出），命令参照 Wan2.1-T2V 模式；参数以本地实测为准，可直接编辑 scripts/wan21-i2v-720p.sh 同步页面。",
+      },
+      {
+        title: "客户端调用 · /v1/videos（图生视频）",
+        lang: "bash",
+        code: `curl -X POST http://localhost:8091/v1/videos \\
+  -F "prompt=The cat turns its head to look at the camera" \\
+  -F "input_reference=@/path/to/reference.png" \\
+  -F "width=1280" -F "height=720" -F "num_frames=33" -F "fps=16" \\
+  -F "num_inference_steps=40" -F "guidance_scale=5.0" \\
+  -F "flow_shift=5.0" -F "seed=42"`,
       },
     ],
     perf: {
@@ -211,7 +233,7 @@ vllm serve Wan-AI/Wan2.1-T2V-14B-Diffusers --omni --port 8091
       rows: [],
     },
     refs: [
-      { label: "官方 recipe · Wan2.1-VACE", url: "https://github.com/vllm-project/vllm-omni/blob/main/recipes/Wan-AI/Wan2.1-VACE.md" },
+      { label: "HuggingFace · Wan2.1-I2V-14B-720P", url: "https://huggingface.co/Wan-AI/Wan2.1-I2V-14B-720P" },
       { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
     ],
   },

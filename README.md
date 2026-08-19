@@ -6,7 +6,7 @@
 
 | 系列 | 模型 | NPU 支持 |
 | --- | --- | --- |
-| Wan 2.1 | Wan2.1-T2V-1.3B / T2V-14B / VACE-1.3B / VACE-14B | ✓ |
+| Wan 2.1 | Wan2.1-T2V-1.3B / T2V-14B / I2V-14B-480P / I2V-14B-720P | T2V ✓，I2V 待验证 |
 | Wan 2.2 | Wan2.2-T2V-A14B / I2V-A14B / TI2V-5B | ✓ |
 | MiniMax H3 | MiniMax-H3（视频 + 立体声音频） | ✓ 社区验证（Atlas 800I A3） |
 | Qwen-Image | 2512 / Edit-2511 / Layered | 2512 ✗，Edit-2511 与 Layered ✓ |

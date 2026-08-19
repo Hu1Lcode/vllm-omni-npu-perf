@@ -100,7 +100,9 @@
 
     <section class="section">
       <h2 class="section-title"><span class="sec-no">01</span> 模型简介</h2>
-      <div class="prose">${model.intro}</div>
+      <div class="prose">${model.intro}
+        <p class="weights-link">模型权重：<a href="https://huggingface.co/${esc(model.hfRepo)}" target="_blank" rel="noopener">${esc(model.hfRepo)}</a></p>
+      </div>
     </section>
 
     <section class="section">
