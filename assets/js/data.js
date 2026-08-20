@@ -1273,7 +1273,7 @@ vllm serve nvidia/Cosmos3-Nano \\
       {
         title: "客户端调用 · /v1/images/generations + /v1/videos/sync",
         lang: "bash",
-        code: `# T2I（1024x1024，10 步；base64 PNG）
+        code: `# T2I（1024x1024，50 步；base64 PNG）
 curl -sS -X POST http://localhost:8000/v1/images/generations \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -1281,18 +1281,19 @@ curl -sS -X POST http://localhost:8000/v1/images/generations \\
     "prompt": "A photorealistic red sports car on a city street at golden hour, cinematic lighting.",
     "negative_prompt": "blurry, distorted, low quality",
     "size": "1024x1024", "n": 1, "response_format": "b64_json",
-    "num_inference_steps": 10, "guidance_scale": 7.0, "seed": 42
+    "num_inference_steps": 50, "guidance_scale": 7.0, "seed": 42
   }' | python -c "import sys,json,base64; open('cosmos3_t2i.png','wb').write(base64.b64decode(json.load(sys.stdin)['data'][0]['b64_json']))"
 
-# T2V（720p，49 帧 @24fps）
+# T2V（1280×720，189 帧 @24fps，35 步）
 curl -sS -X POST http://localhost:8000/v1/videos/sync \\
   -H "Accept: video/mp4" \\
   -F "model=nvidia/Cosmos3-Nano" \\
   -F "prompt=A robot arm is cleaning a plate in the kitchen" \\
   -F "negative_prompt=blurry, distorted, low quality, jittery, deformed" \\
-  -F "size=1280x720" -F "num_frames=49" -F "fps=24" \\
-  -F "num_inference_steps=20" -F "guidance_scale=6.0" \\
+  -F "size=1280x720" -F "num_frames=189" -F "fps=24" \\
+  -F "num_inference_steps=35" -F "guidance_scale=6.0" \\
   -F "max_sequence_length=4096" -F "flow_shift=10.0" \\
+  -F 'extra_params={"use_resolution_template":false,"use_duration_template":false,"guardrails":true}' \\
   -F "seed=123" \\
   -o cosmos3_t2v.mp4
 
@@ -1301,10 +1302,13 @@ curl -sS -X POST http://localhost:8000/v1/videos/sync \\
   -H "Accept: video/mp4" \\
   -F "model=nvidia/Cosmos3-Nano" \\
   -F "prompt=The scene comes to life with smooth, natural motion." \\
-  -F "size=1280x720" -F "num_frames=25" -F "fps=8" \\
-  -F "num_inference_steps=10" -F "guidance_scale=6.0" \\
-  -F "seed=42" \\
-  -F "input_reference=@reference.jpg;type=image/jpeg" \\
+  -F "negative_prompt=blurry, distorted, low quality" \\
+  -F "size=1280x720" -F "num_frames=189" -F "fps=24" \\
+  -F "num_inference_steps=35" -F "guidance_scale=6.0" \\
+  -F "max_sequence_length=4096" -F "flow_shift=10.0" \\
+  -F 'extra_params={"use_resolution_template":false,"use_duration_template":false,"guardrails":true}' \\
+  -F "seed=1111" \\
+  -F "input_reference=@/path/to/reference.jpg;type=image/jpeg" \\
   -o cosmos3_i2v.mp4
 
 # V2V（参考视频）
@@ -1312,10 +1316,13 @@ curl -sS -X POST http://localhost:8000/v1/videos/sync \\
   -H "Accept: video/mp4" \\
   -F "model=nvidia/Cosmos3-Nano" \\
   -F "prompt=Continue the same scene with smooth natural motion and consistent subjects." \\
-  -F "size=1280x720" -F "num_frames=17" -F "fps=5" \\
-  -F "num_inference_steps=10" -F "guidance_scale=6.0" \\
-  -F "seed=42" \\
-  -F "input_reference=@reference.mp4;type=video/mp4" \\
+  -F "negative_prompt=blurry, distorted, low quality, jittery, deformed" \\
+  -F "size=1280x720" -F "num_frames=189" -F "fps=24" \\
+  -F "num_inference_steps=35" -F "guidance_scale=6.0" \\
+  -F "max_sequence_length=4096" -F "flow_shift=10.0" \\
+  -F 'extra_params={"use_resolution_template":false,"use_duration_template":false,"guardrails":true,"condition_frame_indexes_vision":[0,1],"condition_video_keep":"first"}' \\
+  -F "seed=2222" \\
+  -F "input_reference=@/path/to/reference.mp4;type=video/mp4" \\
   -o cosmos3_v2v.mp4`,
         note: "默认参数（recipe）：T2I 1024²/50 步/guidance 7.0；T2V/I2V/V2V 1280×720/35 步/guidance 6.0/flow_shift 10.0。",
       },
