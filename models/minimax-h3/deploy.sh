@@ -20,24 +20,23 @@ export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
 export TASK_QUEUE_ENABLE=2
 # export MINDIE_SD_FA_TYPE=ascend_laser_attention
 
-N_NPUS=8
-
-vllm serve MiniMax-H3/FL2VA \
+vllm serve /home/wjh/models/MiniMax-H3/FL2VA \
   --omni \
   --host 0.0.0.0 \
-  --port 8000 \
+  --port 8989 \
   --trust-remote-code \
-  --num-gpus $N_NPUS \
+  --num-gpus 8 \
   --init-timeout 1800 \
   --stage-init-timeout 1800 \
-  --usp $N_NPUS \
+  --use-hsdp \
+  --hsdp-shard-size 8 \
+  --usp 8 \
   --ring 1 \
-  --text-encoder-tp-size $N_NPUS \
-  --vae-patch-parallel-size $N_NPUS \
+  --text-encoder-tp-size 8 \
+  --vae-patch-parallel-size 8 \
   --vae-parallel-mode tile \
   --vae-use-tiling
-  # --use-hsdp \
-  # --hsdp-shard-size $N_NPUS \
+
 
 # 注: 可选优化：--diffusion-attention-backend RAINFUSION_ATTN（保持 --ring 1）、export MINDIE_SD_FA_TYPE=ascend_laser_attention、T2VA 可用 --quantization int8；HSDP 需配合 export MULTI_STREAM_MEMORY_REUSE=2。注意：不要加 --enforce-eager（regional compile 会在首个请求时预热）；CFG 已蒸馏，--cfg-parallel-size 必须保持 1。
 
@@ -48,7 +47,7 @@ export API_URL="http://127.0.0.1:8000/v1/videos/sync"
 curl -sS -X POST "${API_URL}" \
   -F 'prompt=In a snowy blue-purple forest, Ori carefully walks past a sleeping giant; footsteps crunch in the snow while the creature breathes and softly snorts.' \
   -F 'width=1344' -F 'height=768' -F 'aspect_ratio=16:9' -F 'fps=24' \
-  -F 'num_inference_steps=49' -F 'flow_shift=12' -F 'seed=1101' \
+  -F 'num_inference_steps=50' -F 'flow_shift=12' -F 'seed=1101' \
   -F 'extra_params={"task":"t2va","duration":5,"audio_flow_shift":3.0}' \
   -o t2va.mp4
 
