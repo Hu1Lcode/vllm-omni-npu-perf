@@ -1,6 +1,8 @@
 /* ============================================================
  * 详情页渲染：读取 ?id= 参数，按统一模板渲染
- * 区块：模型简介 → 架构图（占位+文字）→ 部署推理脚本 → 性能数据 → 参考资料
+ * 区块：01 模型简介（models/<id>/README.md）→ 02 部署推理脚本
+ *       （models/<id>/deploy.sh）→ 03 性能数据（models/<id>/perf.json）
+ * 经 server.py 访问时三个区块均从 models/ 动态获取；纯静态打开回退 data.js。
  * ============================================================ */
 (function () {
   "use strict";
@@ -43,6 +45,118 @@
     return `<span class="badge badge-npu no">NPU ✗ 暂不支持</span>`;
   }
 
+  /* ---------- 轻量 Markdown → HTML 渲染器 ----------
+   * 支持 README.md 中使用的子集：标题 / 表格 / 段落 / 无序有序列表 /
+   * 粗体斜体 / 行内代码 / 链接。零依赖、离线可用。 */
+  function mdToHtml(md) {
+    let lines = String(md || "").replace(/\r\n/g, "\n").split("\n");
+    let html = [];
+    let inTable = false;
+    let tableHtml = [];
+    let inCode = false;
+    let codeBuf = [];
+    let listBuf = []; // {type: 'ul'|'ol', items: []}
+    let para = [];
+
+    function inline(s) {
+      s = esc(s);
+      s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
+      s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+      s = s.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+      s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+      return s;
+    }
+
+    function flushPara() {
+      if (para.length) {
+        html.push(`<p>${inline(para.join(" "))}</p>`);
+        para = [];
+      }
+    }
+
+    function flushList() {
+      if (!listBuf.length) return;
+      const tag = listBuf[0].type;
+      html.push(`<${tag}>${listBuf[0].items.map((it) => `<li>${inline(it.text)}</li>`).join("")}</${tag}>`);
+      listBuf = [];
+    }
+
+    function flushTable() {
+      if (inTable && tableHtml.length > 1) {
+        html.push(`<div class="table-wrap"><table class="perf-table">${tableHtml.join("")}</table></div>`);
+      } else if (tableHtml.length) {
+        html.push(`<p>${tableHtml.join(" ")}</p>`);
+      }
+      tableHtml = [];
+      inTable = false;
+    }
+
+    for (const raw of lines) {
+      const line = raw.trimEnd();
+
+      // 代码块
+      if (line.trim().startsWith("```")) {
+        if (inCode) {
+          html.push(`<pre><code>${esc(codeBuf.join("\n"))}</code></pre>`);
+          codeBuf = [];
+          inCode = false;
+        } else {
+          flushPara(); flushList(); flushTable();
+          inCode = true;
+        }
+        continue;
+      }
+      if (inCode) { codeBuf.push(line); continue; }
+
+      // 表格
+      if (line.startsWith("|")) {
+        flushPara(); flushList();
+        const cells = line.replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
+        if (/^:?-{2,}:?$/.test(cells.join(""))) {  // 分隔行
+          inTable = true;
+          continue;
+        }
+        tableHtml.push(`<tr>${cells.map((c) => (inTable ? `<td>${inline(c)}</td>` : `<th>${inline(c)}</th>`)).join("")}</tr>`);
+        continue;
+      }
+      if (inTable) { flushTable(); }
+
+      // 标题
+      let hm = line.match(/^(#{1,4})\s+(.*)$/);
+      if (hm) {
+        flushPara(); flushList();
+        const level = Math.min(hm[1].length + 1, 4);  // h1 → h2 层级（页面已有 h1）
+        html.push(`<h${level} class="md-h">${inline(hm[2])}</h${level}>`);
+        continue;
+      }
+
+      // 列表
+      let lm = line.match(/^(\s*)([-*]|\d+\.)\s+(.*)$/);
+      if (lm) {
+        flushPara(); flushTable();
+        const type = /^\d+\.$/.test(lm[2]) ? "ol" : "ul";
+        if (!listBuf.length || listBuf[0].type !== type) {
+          flushList();
+          listBuf = [{ type: type, items: [] }];
+        }
+        listBuf[0].items.push({ text: lm[3] });
+        continue;
+      }
+
+      // 空行
+      if (!line.trim()) {
+        flushPara(); flushList(); flushTable();
+        continue;
+      }
+
+      // 普通段落
+      para.push(line.trim());
+    }
+    flushPara(); flushList(); flushTable();
+    if (inCode) html.push(`<pre><code>${esc(codeBuf.join("\n"))}</code></pre>`);
+    return html.join("\n");
+  }
+
   /* ---------- 部署脚本代码块 ---------- */
   function serveBlocksHtml(serve) {
     return (serve || [])
@@ -66,7 +180,7 @@
     const cols = columns || [];
     const body = (rows && rows.length)
       ? rows.map((r) => `<tr>${(r || []).map((c) => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")
-      : `<tr class="perf-empty"><td colspan="${cols.length}">暂无实测数据 —— 待填入（编辑 perf-data.json 或运行 bench 工具链）</td></tr>`;
+      : `<tr class="perf-empty"><td colspan="${cols.length}">暂无实测数据 —— 待填入（编辑 models/${esc(model.id)}/perf.json 或运行 bench 工具链）</td></tr>`;
     return `
       <div class="table-wrap">
         <table class="perf-table">
@@ -76,16 +190,21 @@
       </div>`;
   }
 
-  /* ---------- 参考资料 ---------- */
-  function refsHtml(refs) {
-    if (!refs || !refs.length) return "";
-    return `
-      <ul class="ref-list">
-        ${refs.map((r) => `<li><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.label)}</a></li>`).join("")}
-      </ul>`;
+  /* ---------- 静态回退：模型结构 + 参考资料 ----------
+   * data.js 的 intro 只含介绍；结构与参考资料在 arch.text / refs 中，
+   * 纯静态打开时（fetch 失败）也一并渲染，与 README.md 动态渲染保持一致。 */
+  function archHtml(m) {
+    return m.arch && m.arch.text ? `<h3 class="md-h">模型结构</h3>${m.arch.text}` : "";
   }
 
-  /* ---------- 整页渲染 ---------- */
+  function refsHtml(m) {
+    if (!m.refs || !m.refs.length) return "";
+    return `<h3 class="md-h">参考资料</h3><ul>${m.refs
+      .map((r) => `<li><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.label)}</a></li>`)
+      .join("")}</ul>`;
+  }
+
+  /* ---------- 整页渲染（三个区块：简介 / 脚本 / 性能） ---------- */
   app.innerHTML = `
     <section class="page-head">
       <h1>${esc(model.name)}</h1>
@@ -100,35 +219,18 @@
 
     <section class="section">
       <h2 class="section-title"><span class="sec-no">01</span> 模型简介</h2>
-      <div class="prose">${model.intro}
-        <p class="weights-link">模型权重：<a href="https://huggingface.co/${esc(model.hfRepo)}" target="_blank" rel="noopener">${esc(model.hfRepo)}</a></p>
-      </div>
+      <div class="prose" id="introContent">${model.intro}${archHtml(model)}${refsHtml(model)}</div>
     </section>
 
     <section class="section">
-      <h2 class="section-title"><span class="sec-no">02</span> 架构图</h2>
-      <div class="arch-placeholder">
-        <div class="arch-icon">🖼️</div>
-        <p class="ph-title">架构图占位 —— 待补充</p>
-        <p class="ph-sub">可在此处插入架构图（SVG / PNG），或后续改用 Mermaid 渲染</p>
-      </div>
-      <div class="prose">${model.arch && model.arch.text ? model.arch.text : ""}</div>
-    </section>
-
-    <section class="section">
-      <h2 class="section-title"><span class="sec-no">03</span> 部署推理脚本</h2>
+      <h2 class="section-title"><span class="sec-no">02</span> 部署推理脚本</h2>
       <div id="serveBlocks">${serveBlocksHtml(model.serve)}</div>
     </section>
 
     <section class="section">
-      <h2 class="section-title"><span class="sec-no">04</span> 性能数据</h2>
+      <h2 class="section-title"><span class="sec-no">03</span> 性能数据</h2>
       <p class="perf-hint" id="perfHint">⚠ 以下为占位表格，性能数据待填入实测结果（NPU 实测）。</p>
       <div id="perfTable">${perfTableHtml(model.perf.columns, model.perf.rows)}</div>
-    </section>
-
-    <section class="section">
-      <h2 class="section-title"><span class="sec-no">05</span> 参考资料</h2>
-      ${refsHtml(model.refs)}
     </section>`;
 
   /* ---------- 复制按钮 ---------- */
@@ -159,10 +261,7 @@
   }
   bindCopy();
 
-  /* ---------- 部署脚本与 scripts/<模型id>.sh 同步 ----------
-   * 通过 server.py 访问时，从 /api/scripts/<id>.sh 读取并渲染；
-   * 修改 scripts/ 下的脚本后刷新页面即可生效；纯静态打开时回退 data.js。
-   */
+  /* ---------- 部署脚本分块解析（deploy.sh 内容 → 代码块数组） ---------- */
   function parseScriptFile(text) {
     const blocks = [];
     let cur = null;
@@ -182,44 +281,59 @@
     }));
   }
 
+  /* ---------- 动态加载：三个区块均从 models/<id>/ 获取 ----------
+   * 经 server.py 访问时生效；纯静态打开（fetch 失败）回退 data.js 内嵌内容。
+   */
   (async () => {
-    // 部署脚本同步：scripts/<模型id>.sh（经 server.py /api/scripts）
+    if (typeof fetch !== "function") return;
+    const syncNote = (el, text) => {
+      if (el) el.insertAdjacentHTML("beforebegin", `<p class="code-note">✓ ${text}</p>`);
+    };
+
+    // 01 模型简介：/api/models/<id>/readme（markdown）
     try {
-      if (typeof fetch !== "function") return;
-      const resp = await fetch(`/api/scripts/${encodeURIComponent(model.id)}.sh`, { cache: "no-store" });
+      const resp = await fetch(`/api/models/${encodeURIComponent(model.id)}/readme`, { cache: "no-store" });
+      if (resp.ok) {
+        const md = await resp.text();
+        const el = document.getElementById("introContent");
+        if (el && md.trim()) {
+          syncNote(el, `已与 models/${esc(model.id)}/README.md 同步，修改该文件后刷新页面即生效`);
+          el.innerHTML = mdToHtml(md);
+        }
+      }
+    } catch (e) { /* 纯静态模式：使用 data.js 中的 intro */ }
+
+    // 02 部署脚本：/api/models/<id>/script（deploy.sh）
+    try {
+      const resp = await fetch(`/api/models/${encodeURIComponent(model.id)}/script`, { cache: "no-store" });
       if (resp.ok) {
         const blocks = parseScriptFile(await resp.text());
         if (blocks.length) {
           const el = document.getElementById("serveBlocks");
           if (el) {
-            el.insertAdjacentHTML(
-              "beforebegin",
-              `<p class="code-note">✓ 已与 scripts/${esc(model.id)}.sh 同步，修改该文件后刷新页面即生效</p>`
-            );
+            syncNote(el, `已与 models/${esc(model.id)}/deploy.sh 同步，修改该文件后刷新页面即生效`);
             el.innerHTML = serveBlocksHtml(blocks);
             bindCopy();
           }
         }
       }
-    } catch (e) { /* 纯静态模式：使用 data.js 中的内容 */ }
+    } catch (e) { /* 纯静态模式：使用 data.js 中的 serve */ }
 
-    // 性能数据同步：perf-data.json（经 server.py /api/perf）
+    // 03 性能数据：/api/models/<id>/perf（perf.json）
     try {
-      if (typeof fetch !== "function") return;
-      const resp = await fetch(`/api/perf/${encodeURIComponent(model.id)}`, { cache: "no-store" });
-      if (!resp.ok) return;
-      const data = await resp.json();
-      const rows = data && Array.isArray(data.rows) && data.rows.length ? data.rows : null;
-      if (!rows) return;
-      const el = document.getElementById("perfTable");
-      if (!el) return;
-      const hint = document.getElementById("perfHint");
-      if (hint) hint.style.display = "none";
-      el.insertAdjacentHTML(
-        "beforebegin",
-        `<p class="code-note">✓ 性能数据已与 perf-data.json 同步，修改该文件后刷新页面即生效</p>`
-      );
-      el.innerHTML = perfTableHtml((model.perf && model.perf.columns) || [], rows);
+      const resp = await fetch(`/api/models/${encodeURIComponent(model.id)}/perf`, { cache: "no-store" });
+      if (resp.ok) {
+        const data = await resp.json();
+        const cols = (data && data.columns) || (model.perf && model.perf.columns) || [];
+        const rows = data && Array.isArray(data.rows) ? data.rows : [];
+        const el = document.getElementById("perfTable");
+        if (!el) return;
+        if (!rows.length) return;
+        const hint = document.getElementById("perfHint");
+        if (hint) hint.style.display = "none";
+        syncNote(el, `性能数据已与 models/${esc(model.id)}/perf.json 同步，修改该文件后刷新页面即生效`);
+        el.innerHTML = perfTableHtml(cols, rows);
+      }
     } catch (e) { /* 纯静态模式：使用 data.js 中的 rows */ }
   })();
 })();

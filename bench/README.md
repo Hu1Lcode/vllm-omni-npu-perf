@@ -5,7 +5,7 @@
 1. **预热** 1 次推理（丢弃，用于触发 regional compile 等初始化）；
 2. 正式推理 **3 次**（串行执行，每次完成后等待日志落盘）；
 3. 推理时间以 **vllm-omni 服务端日志中的 `e2e_total_ms`** 为准，最终结果 = 三次平均值；
-4. 结果写入 `results/<model_id>.json`，再用 `fill_results.py` 回填网站的 `perf.rows`。
+4. 结果写入 `results/<model_id>.json`，再用 `fill_results.py` 回填网站的 `models/<id>/perf.json`（同时更新 `data.js` 的 `perf.rows` 静态回退）。
 
 日志里每次请求会输出两行耗时信息（部署版本实测格式，注意千位分隔符）：
 
@@ -22,7 +22,7 @@
 ```
 ① 部署服务（或直接附加到已运行服务）
 ② bench.py 预热 + 3 次推理 → results/<model_id>.json
-③ fill_results.py 回填 assets/js/data.js 的 perf.rows
+③ fill_results.py 回填 models/<id>/perf.json（+ data.js 静态回退）
 ④ git commit && git push —— 网站表格更新
 ```
 
@@ -74,7 +74,7 @@ python3 bench/bench.py \
 
 ```bash
 python3 bench/fill_results.py --dry-run results/minimax-h3.json   # 先看将写入的行
-python3 bench/fill_results.py results/minimax-h3.json             # 写回 data.js
+python3 bench/fill_results.py results/minimax-h3.json             # 追加到 models/<id>/perf.json（+ data.js）
 python3 bench/fill_results.py                                     # 回填 results/ 下全部
 ```
 

@@ -19,7 +19,7 @@ import re
 import sys
 
 DATA_JS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "js", "data.js")
-PERF_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "perf-data.json")
+MODELS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "models")
 
 
 def bracket_scan(text, start):
@@ -68,7 +68,7 @@ def locate_model_block(text, model_id):
 
 
 def row_values(result, columns):
-    """按列序返回该结果的纯字符串行（data.js 与 perf-data.json 共用）。"""
+    """按列序返回该结果的纯字符串行（data.js 与 models/*/perf.json 共用）。"""
     c = result.get("config", {})
     e = result.get("env", {})
     avg_ms = result["avg_e2e_total_ms"]
@@ -147,24 +147,30 @@ def main():
         updates.append((model_id, plain_row))
 
     if args.dry_run:
-        print("\n[dry-run] 未修改 data.js / perf-data.json")
+        print("\n[dry-run] 未修改 data.js / models/*/perf.json")
     else:
         with open(DATA_JS, "w", encoding="utf-8") as f:
             f.write(new_text)
-        # 同步写入 perf-data.json（页面经 server.py /api/perf 读取）
-        try:
-            with open(PERF_FILE, encoding="utf-8") as f:
-                perf_data = json.load(f)
-        except (OSError, ValueError):
-            perf_data = {}
-        if not isinstance(perf_data, dict):
-            perf_data = {}
+        # 同步写入 models/<id>/perf.json（页面经 server.py /api/models/<id>/perf 读取）；
+        # 同一模型已有行保留，新结果追加到末尾。
         for model_id, plain_row in updates:
-            perf_data[model_id] = [plain_row]
-        with open(PERF_FILE, "w", encoding="utf-8") as f:
-            json.dump(perf_data, f, ensure_ascii=False, indent=2)
-            f.write("\n")
-        print(f"已回填 {len(files)} 个结果到 {DATA_JS} 与 {PERF_FILE}")
+            perf_path = os.path.join(MODELS_DIR, model_id, "perf.json")
+            try:
+                with open(perf_path, encoding="utf-8") as f:
+                    perf_data = json.load(f)
+            except (OSError, ValueError):
+                perf_data = {"columns": [], "rows": []}
+            if not isinstance(perf_data, dict):
+                perf_data = {"columns": [], "rows": []}
+            rows = perf_data.get("rows")
+            rows = rows if isinstance(rows, list) else []
+            rows.append(plain_row)
+            perf_data["rows"] = rows
+            os.makedirs(os.path.dirname(perf_path), exist_ok=True)
+            with open(perf_path, "w", encoding="utf-8") as f:
+                json.dump(perf_data, f, ensure_ascii=False, indent=2)
+                f.write("\n")
+        print(f"已回填 {len(files)} 个结果到 {DATA_JS} 与 models/*/perf.json")
 
 
 if __name__ == "__main__":
