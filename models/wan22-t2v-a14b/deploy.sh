@@ -25,10 +25,10 @@ vllm serve Wan-AI/Wan2.2-T2V-A14B-Diffusers \
 create_response=$(curl -s http://localhost:8091/v1/videos \
   -H "Accept: application/json" \
   -F "prompt=Two anthropomorphic cats in comfy boxing gear and bright gloves fight intensely on a spotlighted stage." \
-  -F "width=832" -F "height=480" -F "num_frames=33" -F "fps=16" \
+  -F "width=832" -F "height=480" -F "num_frames=81" -F "fps=16" \
   -F "num_inference_steps=40" \
-  -F "guidance_scale=4.0" -F "guidance_scale_2=4.0" \
-  -F "boundary_ratio=0.875" -F "flow_shift=5.0" -F "seed=42")
+  -F "guidance_scale=3.0" -F "guidance_scale_2=4.0" \
+  -F "boundary_ratio=0.875" -F "flow_shift=12.0" -F "seed=42")
 
 # 轮询任务状态，直到 status == completed
 video_id=$(echo "$create_response" | jq -r '.id')

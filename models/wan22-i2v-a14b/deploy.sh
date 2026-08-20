@@ -26,10 +26,10 @@ vllm serve --omni Wan-AI/Wan2.2-I2V-A14B-Diffusers \
 curl -X POST http://localhost:8091/v1/videos \
   -F "prompt=A bear playing with yarn, smooth motion" \
   -F "input_reference=@/path/to/qwen-bear.png" \
-  -F "width=832" -F "height=480" -F "num_frames=33" -F "fps=16" \
+  -F "width=832" -F "height=480" -F "num_frames=81" -F "fps=16" \
   -F "num_inference_steps=40" \
-  -F "guidance_scale=1.0" -F "guidance_scale_2=1.0" \
-  -F "boundary_ratio=0.875" -F "flow_shift=12.0" \
+  -F "guidance_scale=3.5" -F "guidance_scale_2=3.5" \
+  -F "boundary_ratio=0.900" -F "flow_shift=5.0" \
   -F 'extra_params={"sample_solver":"euler"}' -F "seed=42"
 
 # 蒸馏/Lightning 权重使用 sample_solver=euler，官方权重默认 unipc
