@@ -1273,7 +1273,7 @@ vllm serve nvidia/Cosmos3-Nano \\
       {
         title: "客户端调用 · /v1/images/generations + /v1/videos/sync",
         lang: "bash",
-        code: `# T2I（1024x1024，10 步）
+        code: `# T2I（1024x1024，10 步；base64 PNG）
 curl -sS -X POST http://localhost:8000/v1/images/generations \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -1282,33 +1282,42 @@ curl -sS -X POST http://localhost:8000/v1/images/generations \\
     "negative_prompt": "blurry, distorted, low quality",
     "size": "1024x1024", "n": 1, "response_format": "b64_json",
     "num_inference_steps": 10, "guidance_scale": 7.0, "seed": 42
-  }' | python3 -c "import sys,json,base64; open('cosmos3_t2i.png','wb').write(base64.b64decode(json.load(sys.stdin)['data'][0]['b64_json']))"
+  }' | python -c "import sys,json,base64; open('cosmos3_t2i.png','wb').write(base64.b64decode(json.load(sys.stdin)['data'][0]['b64_json']))"
 
 # T2V（720p，49 帧 @24fps）
-curl -sS -X POST http://localhost:8000/v1/videos/sync -H "Accept: video/mp4" \\
-  -F "model=nvidia/Cosmos3-Nano" -F "prompt=A robot arm is cleaning a plate in the kitchen" \\
+curl -sS -X POST http://localhost:8000/v1/videos/sync \\
+  -H "Accept: video/mp4" \\
+  -F "model=nvidia/Cosmos3-Nano" \\
+  -F "prompt=A robot arm is cleaning a plate in the kitchen" \\
   -F "negative_prompt=blurry, distorted, low quality, jittery, deformed" \\
   -F "size=1280x720" -F "num_frames=49" -F "fps=24" \\
   -F "num_inference_steps=20" -F "guidance_scale=6.0" \\
-  -F "max_sequence_length=4096" -F "flow_shift=10.0" -F "seed=123" \\
+  -F "max_sequence_length=4096" -F "flow_shift=10.0" \\
+  -F "seed=123" \\
   -o cosmos3_t2v.mp4
 
 # I2V（参考图）
-curl -sS -X POST http://localhost:8000/v1/videos/sync -H "Accept: video/mp4" \\
-  -F "model=nvidia/Cosmos3-Nano" -F "prompt=The scene comes to life with smooth, natural motion." \\
+curl -sS -X POST http://localhost:8000/v1/videos/sync \\
+  -H "Accept: video/mp4" \\
+  -F "model=nvidia/Cosmos3-Nano" \\
+  -F "prompt=The scene comes to life with smooth, natural motion." \\
   -F "size=1280x720" -F "num_frames=25" -F "fps=8" \\
-  -F "num_inference_steps=10" -F "guidance_scale=6.0" -F "seed=42" \\
+  -F "num_inference_steps=10" -F "guidance_scale=6.0" \\
+  -F "seed=42" \\
   -F "input_reference=@reference.jpg;type=image/jpeg" \\
   -o cosmos3_i2v.mp4
 
 # V2V（参考视频）
-curl -sS -X POST http://localhost:8000/v1/videos/sync -H "Accept: video/mp4" \\
-  -F "model=nvidia/Cosmos3-Nano" -F "prompt=Continue the same scene with smooth natural motion and consistent subjects." \\
+curl -sS -X POST http://localhost:8000/v1/videos/sync \\
+  -H "Accept: video/mp4" \\
+  -F "model=nvidia/Cosmos3-Nano" \\
+  -F "prompt=Continue the same scene with smooth natural motion and consistent subjects." \\
   -F "size=1280x720" -F "num_frames=17" -F "fps=5" \\
-  -F "num_inference_steps=10" -F "guidance_scale=6.0" -F "seed=42" \\
+  -F "num_inference_steps=10" -F "guidance_scale=6.0" \\
+  -F "seed=42" \\
   -F "input_reference=@reference.mp4;type=video/mp4" \\
   -o cosmos3_v2v.mp4`,
-        note: "T2V + 声音：追加 -F \"generate_sound=true\"（T2VS/I2VS，输出 AAC 48kHz 立体声）；动作策略：extra_params action_mode（forward_dynamics / policy / inverse_dynamics），policy 走异步 /v1/videos 从顶层 action 字段读结果；默认参数 T2I 1024²/50 步/guidance 7.0，T2V 1280×720/35 步/guidance 6.0/flow_shift 10.0。",
+        note: "默认参数（recipe）：T2I 1024²/50 步/guidance 7.0；T2V/I2V/V2V 1280×720/35 步/guidance 6.0/flow_shift 10.0。",
       },
     ],
     perf: {
