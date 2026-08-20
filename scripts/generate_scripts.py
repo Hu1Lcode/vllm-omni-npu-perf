@@ -169,6 +169,7 @@ def main():
     ap = argparse.ArgumentParser(description="生成 scripts/<模型id>.sh")
     ap.add_argument("--check", action="store_true", help="只检查与现有文件是否一致，不写盘")
     ap.add_argument("--only", default="", help="只处理指定模型 id（逗号分隔），其余不动（保护手改的脚本）")
+    ap.add_argument("--force", action="store_true", help="强制覆盖被手改过的脚本（默认跳过与 data.js 不一致的文件）")
     args = ap.parse_args()
 
     models = parse_models()
@@ -186,6 +187,12 @@ def main():
                 print(f"[check] 不一致: {path}")
                 changed += 1
             continue
+        # 保护手改：文件已被手动修改（与 data.js 不一致）时默认跳过，--force 才覆盖
+        if os.path.exists(path) and not args.force:
+            existing = open(path, encoding="utf-8").read()
+            if existing != content:
+                print(f"[跳过] {model['id']}.sh 已被手改（与 data.js 不一致），未覆盖；如需强制覆盖请加 --force")
+                continue
         with open(path, "w", encoding="utf-8") as f:
             f.write(content)
         os.chmod(path, 0o755)
