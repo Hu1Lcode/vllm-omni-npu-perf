@@ -14,8 +14,14 @@ vllm serve Tongyi-MAI/Z-Image-Turbo --omni --port 8000
 # 注意：num_heads=30，仅支持 tensor_parallel_size=2
 
 # ---------- 客户端调用 · /v1/images/generations ----------
-curl -X POST http://localhost:8000/v1/images/generations \
+curl http://localhost:8000/v1/images/generations \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "a black and white cat wearing a princess tiara", "size": "1024x1024", "num_inference_steps": 9, "seed": 42}' \
-  | jq -r '.data[0].b64_json' | base64 -d > cat.png
+  -d '{
+    "model": "Tongyi-MAI/Z-Image-Turbo",
+    "prompt": "A ceramic teapot on a wooden table",
+    "size": "1024x1024",
+    "num_inference_steps": 9,
+    "seed": 42
+  }' \
+  | jq -r '.data[0].b64_json' | base64 -d > teapot.png
 

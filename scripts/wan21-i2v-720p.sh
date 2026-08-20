@@ -11,6 +11,7 @@
 # ---------- 部署推理服务 · vllm serve ----------
 export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
 export TASK_QUEUE_ENABLE=2
+export MINDIE_SD_FA_TYPE=ascend_laser_attention 
 
 # 基础启动
 vllm serve Wan-AI/Wan2.1-I2V-14B-720P --omni --port 8091

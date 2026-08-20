@@ -9,12 +9,10 @@
 # ============================================================
 
 # ---------- 部署推理服务 · vllm serve ----------
-CUDA_VISIBLE_DEVICES=0 \
+export ASCEND_RT_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 vllm serve robbyant/lingbot-video-dense-1.3b \
   --omni \
   --model-class-name LingBotVideoPipeline \
-  --default-sampling-params \
-  '{"0":{"num_frames":81,"num_inference_steps":40,"guidance_scale":6.0}}' \
   --port 8091
 
 # 注: 官方 recipe 仅验证 CUDA 单卡路径；多卡并行、Cache-DiT、量化、CPU 卸载未验证。官方矩阵未列入 NPU。
@@ -23,8 +21,8 @@ vllm serve robbyant/lingbot-video-dense-1.3b \
 create_response=$(curl -s http://localhost:8091/v1/videos \
   -F "model=robbyant/lingbot-video-dense-1.3b" \
   -F "prompt=a robotic arm picks up a red block" \
-  -F "width=320" -F "height=192" -F "num_frames=9" -F "fps=24" \
-  -F "num_inference_steps=2" -F "guidance_scale=3.0" -F "flow_shift=3.0" \
+  -F "width=832" -F "height=480" -F "num_frames=81" -F "fps=16" \
+  -F "num_inference_steps=40" -F "guidance_scale=3.0" -F "flow_shift=3.0" \
   -F "seed=42")
 
 video_id=$(echo "$create_response" | jq -r '.id')

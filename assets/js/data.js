@@ -1234,67 +1234,80 @@ vllm serve hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-720p_i2v --omni \\
 
   /* ─────────────────────────── Cosmos3 系列 ─────────────────────────── */
   {
-    id: "cosmos3-super",
-    name: "Cosmos3-Super",
+    id: "cosmos3-nano",
+    name: "Cosmos3-Nano",
     series: "cosmos3",
     seriesName: "Cosmos3 系列",
     org: "nvidia",
     tasks: ["文生图", "文生视频", "图生视频", "视频+音频"],
-    params: "64B（稠密，Mixture-of-Transformers）",
-    hfRepo: "nvidia/Cosmos3-Super",
+    params: "参数量未标注（BF16 权重约 17 GiB）",
+    hfRepo: "nvidia/Cosmos3-Nano",
     npu: true,
     npuNote: "",
-    summary: "NVIDIA 全模态世界模型：T2I / T2V / I2V / V2V / 带声音视频 / 动作策略",
+    summary: "NVIDIA 全模态世界模型（轻量版）：T2I / T2V / I2V / V2V / 带声音视频 / 动作策略",
     intro: `
-      <p><strong>Cosmos3-Super</strong> 是 NVIDIA 开源的 Cosmos3 全模态世界模型（64B，Mixture-of-Transformers 架构）：统一支持文生图（T2I）、文生视频（T2V）、图生视频（I2V）、视频生视频（V2V）、带声音的视频生成以及动作策略（forward dynamics / policy / inverse dynamics）。</p>
-      <p>官方支持矩阵标注其在昇腾 NPU 上<strong>支持</strong>，并有专门 NPU recipe（8× Ascend910 A2/A3）：配合 mindie-sd 融合算子与 Laser Attention，T2I 256²/2 步约 1.5 秒。注意：NPU 上 FP8 量化尚未验证、--enable-layerwise-offload 未测试。</p>
+      <p><strong>Cosmos3-Nano</strong> 是 NVIDIA Cosmos3 全模态世界模型家族中的轻量成员（ModelScope 同步镜像：nv-community/Cosmos3-Nano）：统一支持文生图（T2I）、文生视频（T2V）、图生视频（I2V）、视频生视频（V2V）、带声音的视频生成（T2VS/I2VS）以及动作策略（forward dynamics / policy / inverse dynamics）。</p>
+      <p>官方支持矩阵标注其在昇腾 NPU 上<strong>支持</strong>，并有专门 NPU recipe（1× Ascend 910B/910C，Atlas A2/A3，CANN 8.5.1 + NNAL）验证：T2I 1024²/10 步约 8s、T2V 720p/20 步/49 帧约 55s。注意：NPU 上 --quantization fp8 与 --enable-layerwise-offload 不支持。</p>
     `,
     arch: {
       text: `
-        <p>Mixture-of-Transformers 双通路架构：<strong>UND</strong>（理解）通路在文本 token 上做因果自注意力（Qwen3-VL 骨干），<strong>GEN</strong>（生成）通路中视觉 Q 对 [K_und, K_gen] 做交叉注意力。视频侧使用 Wan VAE（时空编解码），声音侧使用 Diffusers-format AVAE 音频 tokenizer（generate_sound 时输出 AAC 48kHz 立体声）。采用流匹配采样（flow_shift）。默认启用安全护栏（guardrail，--no-guardrails 可关闭）。</p>
+        <p>Mixture-of-Transformers 双通路架构：<strong>UND</strong>（理解）通路在文本 token 上做因果自注意力（Qwen3-VL 骨干），<strong>GEN</strong>（生成）通路中视觉 Q 对 [K_und, K_gen] 做交叉注意力。视频侧使用 Wan VAE（时空编解码），声音侧使用 Diffusers-format AVAE 音频 tokenizer（generate_sound 时输出 AAC 48kHz 立体声）。采用流匹配采样（flow_shift）。默认启用安全护栏（guardrail，--no-guardrails 可关闭）。支持 256p / 480p / 720p（16:9、4:3、1:1、3:4、9:16）。</p>
         <p>数据流：文本/图像/视频输入 → Qwen3-VL 编码（UND）→ GEN 交叉注意力去噪 → Wan VAE 解码（+ 音频生成）→ 输出。</p>
       `,
     },
     serve: [
       {
-        title: "部署推理服务 · vllm serve（8 卡 NPU）",
+        title: "部署推理服务 · vllm serve（1 卡 NPU）",
         lang: "bash",
-        code: `# 前置：安装 mindie-sd 融合算子库（gitcode.com/Ascend/MindIE-SD）
-export MINDIE_SD_FA_TYPE=ascend_laser_attention
-
-vllm serve nvidia/Cosmos3-Super \\
+        code: `# 单卡 NPU（Atlas A2/A3，CANN 8.5.1 + NNAL）
+vllm serve nvidia/Cosmos3-Nano \\
   --omni \\
   --host 0.0.0.0 --port 8000 \\
-  --tensor-parallel-size 8 \\
-  --model-class-name Cosmos3OmniDiffusersPipeline \\
-  --no-guardrails \\
-  --init-timeout 1800`,
-        note: "官方 NPU recipe（8× Ascend910 A2/A3）验证：T2I 256²/2 步约 1.5s；NPU 上 FP8 量化未验证、--enable-layerwise-offload 未测试。",
+  --init-timeout 1800
+
+# 多卡 NPU：追加 --tensor-parallel-size 8
+# 关闭 guardrails：追加 --no-guardrails（需自行确认合规）`,
+        note: "guardrails 默认开启（需 pip install cosmos-guardrail + HF_TOKEN 访问 gated 仓库 nvidia/Cosmos-1.0-Guardrail）；NPU 上 --quantization fp8 与 --enable-layerwise-offload 不支持。官方实测（1× 910B/910C，bf16，无 guardrails）：T2I 1024²/10 步约 8s；T2V 720p/20 步/49 帧约 55s；I2V 约 25s；V2V 480×320 约 12s；720p 峰值显存约 46 GiB（单卡）。",
       },
       {
-        title: "客户端调用 · /v1/videos/sync（T2V / I2V）",
+        title: "客户端调用 · /v1/images/generations + /v1/videos/sync",
         lang: "bash",
-        code: `# T2V（1280×720，189 帧，35 步）
+        code: `# T2I（1024x1024，10 步）
+curl -sS -X POST http://localhost:8000/v1/images/generations \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "nvidia/Cosmos3-Nano",
+    "prompt": "A photorealistic red sports car on a city street at golden hour, cinematic lighting.",
+    "negative_prompt": "blurry, distorted, low quality",
+    "size": "1024x1024", "n": 1, "response_format": "b64_json",
+    "num_inference_steps": 10, "guidance_scale": 7.0, "seed": 42
+  }' | python3 -c "import sys,json,base64; open('cosmos3_t2i.png','wb').write(base64.b64decode(json.load(sys.stdin)['data'][0]['b64_json']))"
+
+# T2V（720p，49 帧 @24fps）
 curl -sS -X POST http://localhost:8000/v1/videos/sync -H "Accept: video/mp4" \\
-  -F "model=nvidia/Cosmos3-Super" -F "prompt=A robot arm is cleaning a plate in the kitchen" \\
-  -F "size=1280x720" -F "num_frames=189" -F "fps=24" -F "num_inference_steps=35" \\
-  -F "guidance_scale=6.0" -F "max_sequence_length=4096" -F "flow_shift=10.0" \\
-  -F 'extra_params={"use_resolution_template":false,"use_duration_template":false,"guardrails":false}' \\
-  -F "seed=17" -o cosmos3_super_t2v.mp4
+  -F "model=nvidia/Cosmos3-Nano" -F "prompt=A robot arm is cleaning a plate in the kitchen" \\
+  -F "negative_prompt=blurry, distorted, low quality, jittery, deformed" \\
+  -F "size=1280x720" -F "num_frames=49" -F "fps=24" \\
+  -F "num_inference_steps=20" -F "guidance_scale=6.0" \\
+  -F "max_sequence_length=4096" -F "flow_shift=10.0" -F "seed=123" \\
+  -o cosmos3_t2v.mp4
 
 # I2V（参考图）
 curl -sS -X POST http://localhost:8000/v1/videos/sync -H "Accept: video/mp4" \\
-  -F "model=nvidia/Cosmos3-Super" -F "prompt=The scene comes to life with smooth, natural motion." \\
-  -F "size=1280x720" -F "num_frames=189" -F "fps=24" -F "num_inference_steps=35" \\
-  -F "guidance_scale=6.0" -F "max_sequence_length=4096" -F "flow_shift=10.0" \\
-  -F 'extra_params={"use_resolution_template":false,"use_duration_template":false,"guardrails":false}' \\
-  -F "seed=1111" -F "input_reference=@/path/to/reference.jpg;type=image/jpeg" \\
-  -o cosmos3_super_i2v.mp4
+  -F "model=nvidia/Cosmos3-Nano" -F "prompt=The scene comes to life with smooth, natural motion." \\
+  -F "size=1280x720" -F "num_frames=25" -F "fps=8" \\
+  -F "num_inference_steps=10" -F "guidance_scale=6.0" -F "seed=42" \\
+  -F "input_reference=@reference.jpg;type=image/jpeg" \\
+  -o cosmos3_i2v.mp4
 
-# T2V + 声音：追加 -F "generate_sound=true" -F "sound_duration=7.875"
-# V2V：input_reference 改为参考视频（type=video/mp4），extra_params 加 condition_frame_indexes_vision / condition_video_keep
-# T2I：POST /v1/images/generations（size=1024x1024，50 步，guidance_scale=7.0）`,
-        note: "guardrails 默认开启（需 cosmos-guardrail + HF_TOKEN），--no-guardrails 或 extra_params guardrails:false 关闭；NPU 上 FP8 量化未验证、--enable-layerwise-offload 未测试。",
+# V2V（参考视频）
+curl -sS -X POST http://localhost:8000/v1/videos/sync -H "Accept: video/mp4" \\
+  -F "model=nvidia/Cosmos3-Nano" -F "prompt=Continue the same scene with smooth natural motion and consistent subjects." \\
+  -F "size=1280x720" -F "num_frames=17" -F "fps=5" \\
+  -F "num_inference_steps=10" -F "guidance_scale=6.0" -F "seed=42" \\
+  -F "input_reference=@reference.mp4;type=video/mp4" \\
+  -o cosmos3_v2v.mp4`,
+        note: "T2V + 声音：追加 -F \"generate_sound=true\"（T2VS/I2VS，输出 AAC 48kHz 立体声）；动作策略：extra_params action_mode（forward_dynamics / policy / inverse_dynamics），policy 走异步 /v1/videos 从顶层 action 字段读结果；默认参数 T2I 1024²/50 步/guidance 7.0，T2V 1280×720/35 步/guidance 6.0/flow_shift 10.0。",
       },
     ],
     perf: {
@@ -1302,8 +1315,9 @@ curl -sS -X POST http://localhost:8000/v1/videos/sync -H "Accept: video/mp4" \\
       rows: [],
     },
     refs: [
-      { label: "官方 NPU recipe · Cosmos3-Super", url: "https://github.com/vllm-project/vllm-omni/blob/main/recipes/cosmos3/Cosmos3-Super.md" },
-      { label: "recipes.vllm.ai · Cosmos3-Super", url: "https://recipes.vllm.ai/nvidia/Cosmos3-Super" },
+      { label: "ModelScope · nv-community/Cosmos3-Nano", url: "https://www.modelscope.cn/models/nv-community/Cosmos3-Nano" },
+      { label: "官方 NPU recipe · Cosmos3-Nano", url: "https://github.com/vllm-project/vllm-omni/blob/main/recipes/cosmos3/Cosmos3-Nano.md" },
+      { label: "HuggingFace · nvidia/Cosmos3-Nano", url: "https://huggingface.co/nvidia/Cosmos3-Nano" },
       { label: "支持模型矩阵", url: "https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/" },
     ],
   },

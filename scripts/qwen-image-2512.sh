@@ -24,7 +24,7 @@ curl http://localhost:8091/v1/images/generations \
     "model": "Qwen/Qwen-Image-2512",
     "prompt": "A ceramic teapot on a wooden table",
     "size": "1024x1024",
-    "num_inference_steps": 20,
+    "num_inference_steps": 50,
     "seed": 42
   }' \
   | jq -r '.data[0].b64_json' | base64 -d > teapot.png

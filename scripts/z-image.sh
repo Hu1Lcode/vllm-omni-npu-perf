@@ -14,8 +14,15 @@ vllm serve Tongyi-MAI/Z-Image --omni --port 8091
 # 注: NPU 支持状态待验证，建议优先使用官方矩阵列出的 Z-Image-Turbo。
 
 # ---------- 客户端调用 · /v1/images/generations ----------
-curl -X POST http://localhost:8091/v1/images/generations \
+curl http://localhost:8091/v1/images/generations \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "a cup of coffee on the table", "size": "1024x1024", "seed": 42}' \
-  | jq -r '.data[0].b64_json' | base64 -d > coffee.png
+  -d '{
+    "model": "Tongyi-MAI/Z-Image",
+    "prompt": "A ceramic teapot on a wooden table",
+    "size": "1024x1024",
+    "num_inference_steps": 50,
+    "guidance_scale": 4.0,
+    "seed": 42
+  }' \
+  | jq -r '.data[0].b64_json' | base64 -d > teapot.png
 

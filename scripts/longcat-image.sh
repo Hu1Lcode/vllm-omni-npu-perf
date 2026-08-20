@@ -15,8 +15,15 @@ vllm serve meituan-longcat/LongCat-Image --omni --port 8091
 # 注: 官方未提供该模型的专属 serve 命令与 NPU 专项说明；支持状态以官方矩阵（NPU ✓）为准，参数以官方文档为准。
 
 # ---------- 客户端调用 · /v1/images/generations ----------
-curl -X POST http://localhost:8091/v1/images/generations \
+curl http://localhost:8091/v1/images/generations \
   -H "Content-Type: application/json" \
-  -d '{"model": "meituan-longcat/LongCat-Image", "prompt": "a cute cat on the grass", "size": "1024x1024", "seed": 42}' \
-  | jq -r '.data[0].b64_json' | base64 -d > cat.png
+  -d '{
+    "model": "meituan-longcat/LongCat-Image",
+    "prompt": "A ceramic teapot on a wooden table",
+    "size": "1024x1024",
+    "num_inference_steps": 50,
+    "guidance_scale": 4.0,
+    "seed": 42
+  }' \
+  | jq -r '.data[0].b64_json' | base64 -d > teapot.png
 
