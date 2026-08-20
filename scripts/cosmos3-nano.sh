@@ -8,14 +8,15 @@
 # 也可改 data.js 的 serve 字段后重新生成覆盖本文件。
 # ============================================================
 
-# ---------- 部署推理服务 · vllm serve（1 卡 NPU） ----------
-# 单卡 NPU（Atlas A2/A3，CANN 8.5.1 + NNAL）
+# ---------- 部署推理服务 · vllm serve（GPU / NPU） ----------
+# 1× GPU（H200 141GB / B300）或 1× NPU（Ascend 910B/910C，Atlas A2/A3）
 vllm serve nvidia/Cosmos3-Nano \
   --omni \
   --host 0.0.0.0 --port 8000 \
   --init-timeout 1800
 
-# 多卡 NPU：追加 --tensor-parallel-size 8
+# 多卡：GPU 用 --ulysses-degree N 或 --tensor-parallel-size N；NPU 用 --tensor-parallel-size 8
+# 显存优化（仅 GPU）：--enable-layerwise-offload、--quantization fp8（720p 峰值 ~50GB → ~36GB）
 # 关闭 guardrails：追加 --no-guardrails（需自行确认合规）
 
 # 注: guardrails 默认开启（需 pip install cosmos-guardrail + HF_TOKEN 访问 gated 仓库 nvidia/Cosmos-1.0-Guardrail）；NPU 上 --quantization fp8 与 --enable-layerwise-offload 不支持。官方实测（1× 910B/910C，bf16，无 guardrails）：T2I 1024²/10 步约 8s；T2V 720p/20 步/49 帧约 55s；I2V 约 25s；V2V 480×320 约 12s；720p 峰值显存约 46 GiB（单卡）。

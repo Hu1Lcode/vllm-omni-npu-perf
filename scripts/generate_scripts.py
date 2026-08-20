@@ -187,11 +187,12 @@ def main():
                 print(f"[check] 不一致: {path}")
                 changed += 1
             continue
-        # 保护手改：文件已被手动修改（与 data.js 不一致）时默认跳过，--force 才覆盖
+        # 保护手改（最安全规则）：文件内容与将生成的内容不一致即视为手改，默认跳过，
+        # 仅 --force 覆盖。注意：修改 data.js 后重新生成需显式 --force（或先删掉旧文件）。
         if os.path.exists(path) and not args.force:
             existing = open(path, encoding="utf-8").read()
             if existing != content:
-                print(f"[跳过] {model['id']}.sh 已被手改（与 data.js 不一致），未覆盖；如需强制覆盖请加 --force")
+                print(f"[跳过] {model['id']}.sh 与 data.js 不一致（可能被手改），未覆盖；如需强制覆盖请加 --force")
                 continue
         with open(path, "w", encoding="utf-8") as f:
             f.write(content)
