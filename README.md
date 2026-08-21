@@ -25,6 +25,8 @@ vllm-omni-npu-showcase/
 ├── model.html            # 详情页统一模板（?id=模型id）
 ├── server.py             # 可选静态服务 + models/ 数据 API
 ├── generate_models.py    # 从 data.js 生成/校验 models/<id>/ 三件套
+├── perf-data.json        # 历史性能数据归档（迁移前旧格式，页面不读取）
+├── results/              # bench.py 压测输出（fill_results.py 的回填源）
 ├── models/
 │   ├── <模型id>/          # 每个模型一个目录（21 个）
 │   │   ├── README.md     # 模型简介：介绍 / 参数量 / 结构 / 权重地址
@@ -125,6 +127,8 @@ python3 generate_models.py --check  # 只校验一致性（不写盘）
 
    `fill_results.py` 把新结果**追加**到 `models/<id>/perf.json` 的 `rows` 末尾（同一模型多行数据均保留），同时更新 `data.js` 的 `perf.rows`（静态回退）。
 
+> `perf-data.json` 是迁移前的历史性能数据归档（旧格式），仅作备份/回填参考，页面不读取它；新的实测数据请直接写入 `models/<id>/perf.json`。
+
 `perf.json` 格式（每行一个数组，列顺序与该模型 `data.js` 中 `perf.columns` 一致）：
 
 ```json
@@ -145,4 +149,4 @@ python3 generate_models.py --check  # 只校验一致性（不写盘）
 - 部署脚本与 API 示例取自 vLLM-Omni 官方文档（<https://docs.vllm.com.cn/projects/vllm-omni/en/latest/>）与官方 recipes（<https://recipes.vllm.ai/>、vllm-omni 仓库 `recipes/` 目录）。
 - NPU 支持状态依据官方[支持模型矩阵](https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/)标注；MiniMax-H3 标注为「社区验证」（官方 NPU recipe 在 Atlas 800I A3 上验证）。
 - 各模型 `README.md` 的权重行同时给出 HuggingFace 与 ModelScope 链接（HF 访问不到时用 ModelScope 获取），参数量等元信息优先取自官方模型卡。
-- 性能数据目前仅 MiniMax-H3 有 1 行实测数据，其余为占位空表，待填入实测结果。
+- 性能数据目前 9 个模型已有 16 行实测数据（Wan 2.1 全系 4 个、Wan 2.2 全系 3 个、Qwen-Image-2512、MiniMax-H3），其余为占位空表，待填入实测结果。
