@@ -214,11 +214,16 @@
   "qwen-image-layered": [],
   "z-image": [],
   "z-image-turbo": [],
+
+
+
   "ltx-2.3": [],
   "lingbot-video-dense": [],
   "lingbot-video-moe": [],
+
   "longcat-image": [],
   "longcat-image-edit": [],
+
   "hunyuanvideo-1.5-t2v": [],
   "hunyuanvideo-1.5-i2v": [],
   "cosmos3-super": []

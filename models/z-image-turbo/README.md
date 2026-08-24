@@ -6,7 +6,7 @@
 | 组织 | Tongyi-MAI |
 | 任务 | 文生图 |
 | 模型参数量 | 6B（S3-DiT 蒸馏版），4~9 步出图，通常关闭 CFG |
-| NPU 支持 | 支持（仅支持 TP=2） |
+| NPU 支持 | 支持 |
 | 模型权重 | [HuggingFace](https://huggingface.co/Tongyi-MAI/Z-Image-Turbo) · [ModelScope](https://modelscope.cn/models/Tongyi-MAI/Z-Image-Turbo) |
 
 ## 模型介绍

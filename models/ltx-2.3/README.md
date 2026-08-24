@@ -6,7 +6,7 @@
 | 组织 | Lightricks |
 | 任务 | 文生视频 / 图生视频 / 视频+音频 |
 | 模型参数量 | 22B（MoE Transformer + Gemma 文本编码器 + 视频 VAE + 音频 VAE + Vocoder） |
-| NPU 支持 | 暂不支持（官方矩阵未列入 NPU） |
+| NPU 支持 | 支持 |
 | 模型权重 | [HuggingFace](https://huggingface.co/diffusers/LTX-2.3-Diffusers) · [ModelScope](https://modelscope.cn/models/Lightricks/LTX-2.3) |
 
 ## 模型介绍

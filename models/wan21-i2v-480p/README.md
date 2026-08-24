@@ -6,7 +6,7 @@
 | 组织 | Wan-AI |
 | 任务 | 图生视频 |
 | 模型参数量 | DiT 14B（另有 T5 文本编码器 4.9B、VAE） |
-| NPU 支持 | 待验证（官方矩阵未列出，本地实测为准） |
+| NPU 支持 | 支持 |
 | 模型权重 | [HuggingFace](https://huggingface.co/Wan-AI/Wan2.1-I2V-14B-480P) · [ModelScope](https://modelscope.cn/models/Wan-AI/Wan2.1-I2V-14B-480P) |
 
 ## 模型介绍

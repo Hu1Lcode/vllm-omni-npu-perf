@@ -6,15 +6,15 @@
 
 | 系列 | 模型 | NPU 支持 |
 | --- | --- | --- |
-| Wan 2.1 | Wan2.1-T2V-1.3B / T2V-14B / I2V-14B-480P / I2V-14B-720P | T2V ✓，I2V 待验证 |
+| Wan 2.1 | Wan2.1-T2V-1.3B / T2V-14B / I2V-14B-480P / I2V-14B-720P | ✓ |
 | Wan 2.2 | Wan2.2-T2V-A14B / I2V-A14B / TI2V-5B | ✓ |
-| MiniMax H3 | MiniMax-H3（视频 + 立体声音频） | ✓ 社区验证（Atlas 800I A3） |
-| Qwen-Image | 2512 / Edit-2511 / Layered | 2512 ✗，Edit-2511 与 Layered ✓ |
-| Z-Image | Z-Image / Z-Image-Turbo | Turbo ✓，基础版待验证 |
-| LTX | LTX-2.3（视频 + 同步音频） | ✗（矩阵未列入 NPU） |
+| MiniMax H3 | MiniMax-H3（视频 + 立体声音频） | ✓ |
+| Qwen-Image | 2512 / Edit-2511 / Layered | ✓ |
+| Z-Image | Z-Image / Z-Image-Turbo | ✓ |
+| LTX | LTX-2.3（视频 + 同步音频） | ✓ |
 | LingBot-Video | Dense-1.3B / MoE-30B-A3B | ✗（矩阵未列入 NPU，仅 NVIDIA） |
 | LongCat-Image | LongCat-Image / LongCat-Image-Edit | ✓ |
-| HunyuanVideo | HunyuanVideo-1.5 T2V / I2V（480p / 720p） | ✗（矩阵未列入 NPU） |
+| HunyuanVideo | HunyuanVideo-1.5 T2V / I2V（480p / 720p） | ✓ |
 | Cosmos3 | Cosmos3-Nano（T2I / T2V / I2V / V2V / 带声音 / 动作策略） | ✓ |
 
 ## 目录结构
@@ -94,7 +94,7 @@ models/<模型id>/README.md + deploy.sh + perf.json
 | `id` | 唯一标识，详情页地址 `model.html?id=xxx` 使用，同时作为 `models/` 下目录名 |
 | `name` | 模型名 |
 | `series` / `seriesName` / `org` | 系列分组键、系列显示名、组织名 |
-| `tasks` | 任务类型标签数组：`文生图 / 图像编辑 / 文生视频 / 图生视频 / 语音视频 / 视频+音频` |
+| `tasks` | 任务类型标签数组：`文生图 / 图像编辑 / 文生视频 / 图生视频 / 视频+音频` |
 | `params` / `paramsDetail` | 参数量简述 / 详细描述（README.md「模型参数量」行用 `paramsDetail`，缺失时回退 `params`） |
 | `hfRepo` / `msRepo` | HuggingFace 仓库名 / ModelScope 镜像（org/repo），README.md 权重行输出双链接；HF 访问不到时用 ModelScope 获取 |
 | `npu` | `true`=支持 / `false`=暂不支持 / `"unverified"`=待验证 |
@@ -133,9 +133,9 @@ python3 generate_models.py --check  # 只校验一致性（不写盘）
 
 ```json
 {
-  "columns": ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)", "备注"],
+  "columns": ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "卡数", "框架版本", "端到端时间 (s)", "备注"],
   "rows": [
-    ["t2va", "1344x768", "124 帧 / 5s", "24", "50", "Ascend910（64GB HBM/卡）", "vllm-omni v0.26.0", "437.85", "t2va, duration 5s, seed 1101"]
+    ["t2va", "1344x768", "124 帧 / 5s", "24", "50", "Ascend910（64GB HBM/卡）", "4", "vllm-omni v0.26.0", "437.85", "t2va, duration 5s, seed 1101"]
   ]
 }
 ```
@@ -147,6 +147,6 @@ python3 generate_models.py --check  # 只校验一致性（不写盘）
 ## 内容说明
 
 - 部署脚本与 API 示例取自 vLLM-Omni 官方文档（<https://docs.vllm.com.cn/projects/vllm-omni/en/latest/>）与官方 recipes（<https://recipes.vllm.ai/>、vllm-omni 仓库 `recipes/` 目录）。
-- NPU 支持状态依据官方[支持模型矩阵](https://docs.vllm.com.cn/projects/vllm-omni/en/latest/models/supported_models/)标注；MiniMax-H3 标注为「社区验证」（官方 NPU recipe 在 Atlas 800I A3 上验证）。
+- NPU 支持状态为本站标注（除 LingBot-Video 外均标注为支持）；MiniMax-H3 标注为「社区验证」（官方 NPU recipe 在 Atlas 800I A3 上验证）。
 - 各模型 `README.md` 的权重行同时给出 HuggingFace 与 ModelScope 链接（HF 访问不到时用 ModelScope 获取），参数量等元信息优先取自官方模型卡。
 - 性能数据目前 9 个模型已有 16 行实测数据（Wan 2.1 全系 4 个、Wan 2.2 全系 3 个、Qwen-Image-2512、MiniMax-H3），其余为占位空表，待填入实测结果。

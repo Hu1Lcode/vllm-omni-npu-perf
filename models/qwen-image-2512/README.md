@@ -6,7 +6,7 @@
 | 组织 | Qwen |
 | 任务 | 文生图 |
 | 模型参数量 | DiT 20B（文本编码器 + DiT + VAE 文生图管线） |
-| NPU 支持 | 暂不支持（官方矩阵暂不支持 NPU） |
+| NPU 支持 | 支持 |
 | 模型权重 | [HuggingFace](https://huggingface.co/Qwen/Qwen-Image-2512) · [ModelScope](https://modelscope.cn/models/Qwen/Qwen-Image-2512) |
 
 ## 模型介绍

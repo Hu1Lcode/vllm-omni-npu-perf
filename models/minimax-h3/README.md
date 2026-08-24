@@ -6,7 +6,7 @@
 | 组织 | MiniMaxAI |
 | 任务 | 文生视频 / 图生视频 / 视频+音频 |
 | 模型参数量 | 64B（FL2VA 与 Ref2VA 双分区 DiT，共享 Qwen3-VL 编码器 + 视频 VAE + 音频 VAE） |
-| NPU 支持 | 支持（社区验证（Atlas 800I A3）） |
+| NPU 支持 | 支持 |
 | 模型权重 | [HuggingFace](https://huggingface.co/MiniMaxAI/MiniMax-H3) · [ModelScope](https://modelscope.cn/models/MiniMax/MiniMax-H3) |
 
 ## 模型介绍

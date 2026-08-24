@@ -6,7 +6,7 @@
 | 组织 | Tongyi-MAI |
 | 任务 | 文生图 |
 | 模型参数量 | 6B（S3-DiT 单流 DiT），文本编码器 + DiT + VAE |
-| NPU 支持 | 待验证（官方矩阵未列出，待验证） |
+| NPU 支持 | 支持 |
 | 模型权重 | [HuggingFace](https://huggingface.co/Tongyi-MAI/Z-Image) · [ModelScope](https://modelscope.cn/models/Tongyi-MAI/Z-Image) |
 
 ## 模型介绍

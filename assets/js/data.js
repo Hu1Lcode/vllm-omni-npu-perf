@@ -62,7 +62,7 @@ vllm serve Wan-AI/Wan2.1-T2V-1.3B-Diffusers --omni \\
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)", "备注"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "卡数", "框架版本", "端到端时间 (s)", "备注"],
       rows: [],
     },
     refs: [
@@ -121,7 +121,7 @@ vllm serve Wan-AI/Wan2.1-T2V-14B-Diffusers --omni --port 8091
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)", "备注"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "卡数", "框架版本", "端到端时间 (s)", "备注"],
       rows: [],
     },
     refs: [
@@ -140,8 +140,8 @@ vllm serve Wan-AI/Wan2.1-T2V-14B-Diffusers --omni --port 8091
     paramsDetail: "DiT 14B（另有 T5 文本编码器 4.9B、VAE）",
     hfRepo: "Wan-AI/Wan2.1-I2V-14B-480P",
     msRepo: "Wan-AI/Wan2.1-I2V-14B-480P",
-    npu: "unverified",
-    npuNote: "官方矩阵未列出，本地实测为准",
+    npu: true,
+    npuNote: "",
     summary: "参考图像驱动的图生视频（480P）",
     intro: `
       <p><strong>Wan2.1-I2V-14B-480P</strong> 是 Wan 2.1 的图生视频模型：输入一张参考图像 + 文本提示词，生成与之语义一致的 480P 视频。</p>
@@ -179,7 +179,7 @@ vllm serve /path/to/Wan2.1-I2V-14B-480P --omni \\
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)", "备注"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "卡数", "框架版本", "端到端时间 (s)", "备注"],
       rows: [],
     },
     refs: [
@@ -198,8 +198,8 @@ vllm serve /path/to/Wan2.1-I2V-14B-480P --omni \\
     paramsDetail: "DiT 14B（另有 T5 文本编码器 4.9B、VAE）",
     hfRepo: "Wan-AI/Wan2.1-I2V-14B-720P",
     msRepo: "Wan-AI/Wan2.1-I2V-14B-720P",
-    npu: "unverified",
-    npuNote: "官方矩阵未列出，本地实测为准",
+    npu: true,
+    npuNote: "",
     summary: "参考图像驱动的图生视频（720P）",
     intro: `
       <p><strong>Wan2.1-I2V-14B-720P</strong> 是 Wan 2.1 的图生视频模型：输入一张参考图像 + 文本提示词，生成与之语义一致的 720P 视频。</p>
@@ -237,7 +237,7 @@ vllm serve /path/to/Wan2.1-I2V-14B-720P --omni \\
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)", "备注"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "卡数", "框架版本", "端到端时间 (s)", "备注"],
       rows: [],
     },
     refs: [
@@ -307,7 +307,7 @@ curl -L "http://localhost:8091/v1/videos/\${video_id}/content" -o wan22_t2v_outp
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)", "备注"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "卡数", "框架版本", "端到端时间 (s)", "备注"],
       rows: [],
     },
     refs: [
@@ -374,7 +374,7 @@ vllm serve --omni Wan-AI/Wan2.2-I2V-A14B-Diffusers \\
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)", "备注"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "卡数", "框架版本", "端到端时间 (s)", "备注"],
       rows: [],
     },
     refs: [
@@ -431,7 +431,7 @@ vllm serve Wan-AI/Wan2.2-TI2V-5B-Diffusers \\
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)", "备注"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "卡数", "框架版本", "端到端时间 (s)", "备注"],
       rows: [],
     },
     refs: [
@@ -453,7 +453,7 @@ vllm serve Wan-AI/Wan2.2-TI2V-5B-Diffusers \\
     hfRepo: "MiniMaxAI/MiniMax-H3",
     msRepo: "MiniMax/MiniMax-H3",
     npu: true,
-    npuNote: "社区验证（Atlas 800I A3）",
+    npuNote: "",
     summary: "视频 + 原生立体声音频联合生成（t2va / fl2va / ref2va）",
     intro: `
       <p><strong>MiniMax-H3</strong> 是 MiniMax 开源的通用多模态生成模型（64B）：同时生成 24 FPS 视频与原生立体声音频，支持三种任务 —— 文生视频+音频（t2va）、首帧/首尾帧驱动（fl2va）、多参考驱动（ref2va，最多 9 张图像 / 3 段视频 / 3 段音频参考）。</p>
@@ -527,8 +527,8 @@ curl -sS -X POST "\${API_URL}" \\
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)", "备注"],
-      rows: [["t2va", "1344x768", "124 帧 / 5s", "24", "50", "Ascend910（64GB HBM/卡）", "vllm-omni v0.26.0", "437.85", "t2va, duration 5s, seed 1101"]],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "卡数", "框架版本", "端到端时间 (s)", "备注"],
+      rows: [["t2va", "1344x768", "124 帧 / 5s", "24", "50", "Ascend910（64GB HBM/卡）", "4", "vllm-omni v0.26.0", "437.85", "t2va, duration 5s, seed 1101"]],
     },
     refs: [
       { label: "官方 NPU recipe · MiniMax-H3-NPU", url: "https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3-NPU.md" },
@@ -550,8 +550,8 @@ curl -sS -X POST "\${API_URL}" \\
     paramsDetail: "DiT 20B（文本编码器 + DiT + VAE 文生图管线）",
     hfRepo: "Qwen/Qwen-Image-2512",
     msRepo: "Qwen/Qwen-Image-2512",
-    npu: false,
-    npuNote: "官方矩阵暂不支持 NPU",
+    npu: true,
+    npuNote: "",
     summary: "增强真实感与细节的文生图更新版",
     intro: `
       <p><strong>Qwen-Image-2512</strong> 是 Qwen-Image 的 2025 年 12 月更新版本，在真实感、细节与文本渲染上进一步增强。</p>
@@ -591,7 +591,7 @@ curl -sS -X POST "\${API_URL}" \\
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)", "备注"],
+      columns: ["任务", "分辨率", "推理步数", "机型", "卡数", "框架版本", "单张耗时 (s)", "备注"],
       rows: [],
     },
     refs: [
@@ -646,7 +646,7 @@ curl -sS -X POST "\${API_URL}" \\
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)", "备注"],
+      columns: ["任务", "分辨率", "推理步数", "机型", "卡数", "框架版本", "单张耗时 (s)", "备注"],
       rows: [],
     },
     refs: [
@@ -698,7 +698,7 @@ curl -sS -X POST "\${API_URL}" \\
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "层数", "推理步数", "机型", "框架版本", "单张耗时 (s)", "备注"],
+      columns: ["任务", "分辨率", "层数", "推理步数", "机型", "卡数", "框架版本", "单张耗时 (s)", "备注"],
       rows: [],
     },
     refs: [
@@ -719,8 +719,8 @@ curl -sS -X POST "\${API_URL}" \\
     paramsDetail: "6B（S3-DiT 单流 DiT），文本编码器 + DiT + VAE",
     hfRepo: "Tongyi-MAI/Z-Image",
     msRepo: "Tongyi-MAI/Z-Image",
-    npu: "unverified",
-    npuNote: "官方矩阵未列出，待验证",
+    npu: true,
+    npuNote: "",
     summary: "通义实验室文生图基础模型",
     intro: `
       <p><strong>Z-Image</strong> 是 Tongyi-MAI（通义实验室）开源的文生图模型，DiT 架构，图像质量与文本渲染表现优秀。</p>
@@ -749,7 +749,7 @@ curl -sS -X POST "\${API_URL}" \\
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)", "备注"],
+      columns: ["任务", "分辨率", "推理步数", "机型", "卡数", "框架版本", "单张耗时 (s)", "备注"],
       rows: [],
     },
     refs: [
@@ -769,7 +769,7 @@ curl -sS -X POST "\${API_URL}" \\
     hfRepo: "Tongyi-MAI/Z-Image-Turbo",
     msRepo: "Tongyi-MAI/Z-Image-Turbo",
     npu: true,
-    npuNote: "仅支持 TP=2",
+    npuNote: "",
     summary: "4~9 步快速出图的蒸馏版本",
     intro: `
       <p><strong>Z-Image-Turbo</strong> 是 Z-Image 的蒸馏加速版本：<strong>4~9 步</strong>即可出图（通常关闭 CFG），推理效率大幅提升。</p>
@@ -799,7 +799,7 @@ curl -sS -X POST "\${API_URL}" \\
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)", "备注"],
+      columns: ["任务", "分辨率", "推理步数", "机型", "卡数", "框架版本", "单张耗时 (s)", "备注"],
       rows: [],
     },
     refs: [
@@ -821,8 +821,8 @@ curl -sS -X POST "\${API_URL}" \\
     paramsDetail: "22B（MoE Transformer + Gemma 文本编码器 + 视频 VAE + 音频 VAE + Vocoder）",
     hfRepo: "diffusers/LTX-2.3-Diffusers",
     msRepo: "Lightricks/LTX-2.3",
-    npu: false,
-    npuNote: "官方矩阵未列入 NPU",
+    npu: true,
+    npuNote: "",
     summary: "文生/图生视频 + 同步音频（one-stage / 两阶段 / 蒸馏）",
     intro: `
       <p><strong>LTX-2.3</strong> 是 Lightricks 发布的视频生成模型：同时支持文生视频与图生视频，并生成<strong>同步音频</strong>。提供三种管线：one-stage、两阶段（含 LoRA 上采样）、全蒸馏两阶段。</p>
@@ -877,7 +877,7 @@ curl -X POST http://localhost:8000/v1/videos/sync \\
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)", "备注"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "卡数", "框架版本", "端到端时间 (s)", "备注"],
       rows: [],
     },
     refs: [
@@ -947,7 +947,7 @@ curl -L "http://localhost:8091/v1/videos/\${video_id}/content" -o lingbot_t2v.mp
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)", "备注"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "卡数", "框架版本", "端到端时间 (s)", "备注"],
       rows: [],
     },
     refs: [
@@ -1016,7 +1016,7 @@ curl -L "http://localhost:8091/v1/videos/\${video_id}/content" -o lingbot_moe_t2
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)", "备注"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "卡数", "框架版本", "端到端时间 (s)", "备注"],
       rows: [],
     },
     refs: [
@@ -1068,7 +1068,7 @@ vllm serve meituan-longcat/LongCat-Image --omni --port 8091`,
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)", "备注"],
+      columns: ["任务", "分辨率", "推理步数", "机型", "卡数", "框架版本", "单张耗时 (s)", "备注"],
       rows: [],
     },
     refs: [
@@ -1139,7 +1139,7 @@ vllm serve meituan-longcat/LongCat-Image-Edit --omni --port 8092 \\
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "推理步数", "机型", "框架版本", "单张耗时 (s)", "吞吐 (张/s)", "备注"],
+      columns: ["任务", "分辨率", "推理步数", "机型", "卡数", "框架版本", "单张耗时 (s)", "备注"],
       rows: [],
     },
     refs: [
@@ -1161,8 +1161,8 @@ vllm serve meituan-longcat/LongCat-Image-Edit --omni --port 8092 \\
     paramsDetail: "DiT 8.3B（Flow Matching，480p/720p 双分辨率），VAE 编解码",
     hfRepo: "hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-480p_t2v",
     msRepo: "Tencent-Hunyuan/HunyuanVideo-1.5",
-    npu: false,
-    npuNote: "官方矩阵未列入 NPU",
+    npu: true,
+    npuNote: "",
     summary: "480p / 720p 文生视频（T2V）",
     intro: `
       <p><strong>HunyuanVideo-1.5</strong> 是腾讯混元开源的视频生成模型，提供 480p 与 720p 两个分辨率的文生视频（T2V）与图生视频（I2V）checkpoint。</p>
@@ -1201,7 +1201,7 @@ vllm serve hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-720p_t2v --omni \\
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)", "备注"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "卡数", "框架版本", "端到端时间 (s)", "备注"],
       rows: [],
     },
     refs: [
@@ -1221,8 +1221,8 @@ vllm serve hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-720p_t2v --omni \\
     paramsDetail: "DiT 8.3B（Flow Matching，参考图像条件注入），VAE 编解码",
     hfRepo: "hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-480p_i2v",
     msRepo: "Tencent-Hunyuan/HunyuanVideo-1.5",
-    npu: false,
-    npuNote: "官方矩阵未列入 NPU",
+    npu: true,
+    npuNote: "",
     summary: "480p / 720p 图生视频（I2V）",
     intro: `
       <p><strong>HunyuanVideo-1.5-I2V</strong> 是 HunyuanVideo-1.5 的图生视频版本：输入参考图像 + 文本提示词，生成 480p 或 720p 视频。</p>
@@ -1262,7 +1262,7 @@ vllm serve hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-720p_i2v --omni \\
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)", "备注"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "卡数", "框架版本", "端到端时间 (s)", "备注"],
       rows: [],
     },
     refs: [
@@ -1370,7 +1370,7 @@ curl -sS -X POST http://localhost:8000/v1/videos/sync \\
       },
     ],
     perf: {
-      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "框架版本", "端到端时间 (s)", "备注"],
+      columns: ["任务", "分辨率", "帧数 / 时长", "帧率 (fps)", "推理步数", "机型", "卡数", "框架版本", "端到端时间 (s)", "备注"],
       rows: [],
     },
     refs: [

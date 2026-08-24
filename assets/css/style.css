@@ -221,6 +221,43 @@ a:hover { text-decoration: underline; }
   background: rgba(251, 191, 36, 0.07); border: 1px solid rgba(251, 191, 36, 0.28);
   border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;
 }
+
+/* ---------- 推理展示框 ---------- */
+.showcase-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  background: var(--surface);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 30px;
+  color: var(--muted);
+  user-select: none;
+}
+.showcase-icon { font-size: 2.6rem; margin-bottom: 12px; opacity: 0.4; }
+.showcase-text { font-size: 1rem; color: var(--text-2); margin-bottom: 6px; font-weight: 600; }
+.showcase-hint { font-size: 0.85rem; color: var(--muted); }
+
+/* 展示框内的媒体元素 */
+.showcase-media {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.showcase-media-item {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: #000;
+}
+.showcase-media video.showcase-media-item {
+  width: 100%;
+}
+
 .perf-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
 .perf-table th, .perf-table td {
   border: 1px solid var(--border-soft); padding: 10px 14px; text-align: left;

@@ -5,7 +5,7 @@
   "use strict";
 
   const models = window.MODELS || [];
-  const TASKS = ["全部", "文生图", "图像编辑", "文生视频", "图生视频", "语音视频", "视频+音频"];
+  const TASKS = ["全部", "文生图", "图像编辑", "文生视频", "图生视频", "视频+音频"];
   let activeTask = "全部";
 
   function esc(s) {

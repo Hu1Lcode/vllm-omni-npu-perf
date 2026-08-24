@@ -227,6 +227,15 @@
       <div id="serveBlocks">${serveBlocksHtml(model.serve)}</div>
     </section>
 
+    <section class="section showcase-section">
+      <h2 class="section-title"><span class="sec-no">🎬</span> 推理展示</h2>
+      <div class="showcase-placeholder" id="showcaseContainer">
+        <div class="showcase-icon">🖼</div>
+        <p class="showcase-text">推理结果展示区</p>
+        <span class="showcase-hint">部署推理服务后，生成的图片或视频将在此展示</span>
+      </div>
+    </section>
+
     <section class="section">
       <h2 class="section-title"><span class="sec-no">03</span> 性能数据</h2>
       <p class="perf-hint" id="perfHint">⚠ 以下为占位表格，性能数据待填入实测结果（NPU 实测）。</p>
@@ -335,5 +344,25 @@
         el.innerHTML = perfTableHtml(cols, rows);
       }
     } catch (e) { /* 纯静态模式：使用 data.js 中的 rows */ }
+
+    // 🎬 推理展示：/api/models/<id>/media（目录下媒体文件）
+    try {
+      const resp = await fetch(`/api/models/${encodeURIComponent(model.id)}/media`, { cache: "no-store" });
+      if (resp.ok) {
+        const { files } = await resp.json();
+        const container = document.getElementById("showcaseContainer");
+        if (container && files && files.length) {
+          const mediaHtml = files.map((f) => {
+            const url = `/models/${encodeURIComponent(model.id)}/${encodeURIComponent(f)}`;
+            const ext = f.split(".").pop().toLowerCase();
+            if (["mp4", "webm"].includes(ext)) {
+              return `<video src="${url}" controls preload="metadata" class="showcase-media-item"></video>`;
+            }
+            return `<img src="${url}" alt="${esc(f)}" class="showcase-media-item" loading="lazy">`;
+          }).join("");
+          container.innerHTML = `<div class="showcase-media">${mediaHtml}</div>`;
+        }
+      }
+    } catch (e) { /* media 加载失败，保留占位 */ }
   })();
 })();

@@ -6,7 +6,7 @@
 | 组织 | hunyuanvideo-community |
 | 任务 | 文生视频 |
 | 模型参数量 | DiT 8.3B（Flow Matching，480p/720p 双分辨率），VAE 编解码 |
-| NPU 支持 | 暂不支持（官方矩阵未列入 NPU） |
+| NPU 支持 | 支持 |
 | 模型权重 | [HuggingFace](https://huggingface.co/hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-480p_t2v) · [ModelScope](https://modelscope.cn/models/Tencent-Hunyuan/HunyuanVideo-1.5) |
 
 ## 模型介绍

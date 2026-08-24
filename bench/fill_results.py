@@ -84,6 +84,7 @@ def row_values(result, columns):
         "推理步数": c.get("steps", ""),
         "层数": c.get("layers", ""),
         "机型": e.get("machine", ""),
+        "卡数": str(e.get("cards") or c.get("cards") or ""),
         "框架版本": e.get("framework", ""),
         "端到端时间 (s)": f"{avg_s:.2f}",
         "单张耗时 (s)": f"{avg_s:.2f}",

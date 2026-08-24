@@ -204,6 +204,7 @@ def main():
     ap.add_argument("--fps", default="", help="帧率（fps），回填到「帧率 (fps)」列")
     ap.add_argument("--steps", type=int, default=None, help="推理步数")
     ap.add_argument("--machine", default="", help="机型，如 Atlas 800I A3")
+    ap.add_argument("--cards", type=int, default=None, help="卡数（NPU 卡数，回填到「卡数」列）")
     ap.add_argument("--framework", default="", help="框架版本（仅标 vllm-omni 版本），如 vllm-omni v0.25.0")
     ap.add_argument("--deploy", default="", help="部署配置说明（仅记录在结果 JSON，不进网站表格）")
     ap.add_argument("--note", default="", help="备注")
@@ -292,6 +293,7 @@ def main():
             "method": f"预热 {args.warmup} 次（丢弃）+ 正式 {args.runs} 次，取服务端日志 e2e_total_ms 平均值",
             "env": {
                 "machine": args.machine,
+                "cards": args.cards,
                 "framework": args.framework,
             },
             "config": {

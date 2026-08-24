@@ -9,7 +9,11 @@
 # ============================================================
 
 # ---------- 部署推理服务 · vllm serve ----------
-vllm serve Qwen/Qwen-Image-Layered --omni --port 8093
+vllm serve /data/models/Qwen-Image-Layered \
+     --vae-parallel-mode tile \
+     --vae-use-tiling \
+     --omni \
+     --port 8094
 
 # ---------- 客户端调用 · /v1/chat/completions（图层分解） ----------
 curl -s http://localhost:8093/v1/chat/completions \
