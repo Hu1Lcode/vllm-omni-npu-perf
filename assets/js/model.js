@@ -355,10 +355,10 @@
           const mediaHtml = files.map((f) => {
             const url = `/models/${encodeURIComponent(model.id)}/${encodeURIComponent(f)}`;
             const ext = f.split(".").pop().toLowerCase();
-            if (["mp4", "webm"].includes(ext)) {
-              return `<video src="${url}" controls preload="metadata" class="showcase-media-item"></video>`;
-            }
-            return `<img src="${url}" alt="${esc(f)}" class="showcase-media-item" loading="lazy">`;
+            const mediaTag = ["mp4", "webm"].includes(ext)
+              ? `<video src="${url}" controls preload="metadata" class="showcase-media-item"></video>`
+              : `<img src="${url}" alt="${esc(f)}" class="showcase-media-item" loading="lazy">`;
+            return `<figure class="showcase-figure">${mediaTag}<figcaption class="showcase-caption">${esc(f)}</figcaption></figure>`;
           }).join("");
           container.innerHTML = `<div class="showcase-media">${mediaHtml}</div>`;
         }

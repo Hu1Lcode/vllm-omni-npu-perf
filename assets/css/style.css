@@ -257,6 +257,18 @@ a:hover { text-decoration: underline; }
 .showcase-media video.showcase-media-item {
   width: 100%;
 }
+.showcase-figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.showcase-caption {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-family: var(--mono);
+}
 
 .perf-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
 .perf-table th, .perf-table td {

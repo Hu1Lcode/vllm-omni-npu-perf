@@ -1284,8 +1284,8 @@ vllm serve hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-720p_i2v --omni \\
     paramsDetail: "16B（MoE 双通路：UND 理解 + GEN 生成），Qwen3-VL 编码器 + Wan VAE + AVAE 音频 tokenizer",
     hfRepo: "nvidia/Cosmos3-Nano",
     msRepo: "nv-community/Cosmos3-Nano",
-    npu: true,
-    npuNote: "",
+    npu: false,
+    npuNote: "暂不支持",
     summary: "NVIDIA 全模态世界模型（轻量版）：T2I / T2V / I2V / V2V / 带声音视频 / 动作策略",
     intro: `
       <p><strong>Cosmos3-Nano</strong> 是 NVIDIA Cosmos3 全模态世界模型家族中的轻量成员（ModelScope 同步镜像：nv-community/Cosmos3-Nano）：统一支持文生图（T2I）、文生视频（T2V）、图生视频（I2V）、视频生视频（V2V）、带声音的视频生成（T2VS/I2VS）以及动作策略（forward dynamics / policy / inverse dynamics）。</p>

@@ -15,7 +15,7 @@
 | LingBot-Video | Dense-1.3B / MoE-30B-A3B | ✗（矩阵未列入 NPU，仅 NVIDIA） |
 | LongCat-Image | LongCat-Image / LongCat-Image-Edit | ✓ |
 | HunyuanVideo | HunyuanVideo-1.5 T2V / I2V（480p / 720p） | ✓ |
-| Cosmos3 | Cosmos3-Nano（T2I / T2V / I2V / V2V / 带声音 / 动作策略） | ✓ |
+| Cosmos3 | Cosmos3-Nano（T2I / T2V / I2V / V2V / 带声音 / 动作策略） | ✗ 暂不支持 |
 
 ## 目录结构
 
