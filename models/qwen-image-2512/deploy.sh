@@ -9,22 +9,21 @@
 # ============================================================
 
 # ---------- 部署推理服务 · vllm serve ----------
-vllm serve Qwen/Qwen-Image-2512 --omni --port 8091
+export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+vllm serve Qwen/Qwen-Image-2512 --omni --port 8091 --vae-use-slicing --vae-use-tiling
 
 # 逐步连续批处理（step-wise continuous batching）
 #   --step-execution --max-num-seqs 8
-
-# 显存受限时追加
-#   --vae-use-slicing --vae-use-tiling
 
 # ---------- 客户端调用 · /v1/images/generations ----------
 curl http://localhost:8091/v1/images/generations \
   -H "Content-Type: application/json" \
   -d '{
     "model": "Qwen/Qwen-Image-2512",
-    "prompt": "A ceramic teapot on a wooden table",
+    "prompt": "A cinematic view of a futuristic city at sunset",
     "size": "1024x1024",
-    "num_inference_steps": 20,
+    "num_inference_steps": 50,
     "seed": 42
   }' \
   | jq -r '.data[0].b64_json' | base64 -d > teapot.png

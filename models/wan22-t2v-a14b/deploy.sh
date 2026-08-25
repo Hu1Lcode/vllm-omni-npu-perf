@@ -9,26 +9,31 @@
 # ============================================================
 
 # ---------- 部署推理服务 · vllm serve ----------
+export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+export MINDIE_SD_FA_TYPE=ascend_laser_attention 
+export MULTI_STREAM_MEMORY_REUSE=2
 # 基础启动（单卡）
 vllm serve Wan-AI/Wan2.2-T2V-A14B-Diffusers \
   --omni --port 8091 \
   --boundary-ratio 0.875 \
-  --flow-shift 5.0
+  --flow-shift 12.0
 
-# 8 卡 NPU：HSDP + VAE patch 并行 + tiling
+# hsdpsp8la hsdpsp4cfg2la
 vllm serve Wan-AI/Wan2.2-T2V-A14B-Diffusers \
-  --omni --use-hsdp --usp 8 \
+  --port 8091 \
+  --omni --use-hsdp --usp 4 --cfg-parallel-size 2 \
   --vae-patch-parallel-size 8 --vae-use-tiling
 
 # ---------- 客户端调用 · /v1/videos（异步任务） ----------
 # 创建视频生成任务
-create_response=$(curl -s http://localhost:8091/v1/videos \
-  -H "Accept: application/json" \
-  -F "prompt=Two anthropomorphic cats in comfy boxing gear and bright gloves fight intensely on a spotlighted stage." \
+curl -X POST http://localhost:8091/v1/videos \
+  -F "prompt=A cinematic view of a futuristic city at sunset" \
   -F "width=832" -F "height=480" -F "num_frames=81" -F "fps=16" \
   -F "num_inference_steps=40" \
   -F "guidance_scale=3.0" -F "guidance_scale_2=4.0" \
-  -F "boundary_ratio=0.875" -F "flow_shift=12.0" -F "seed=42")
+  -F "boundary_ratio=0.875" -F "flow_shift=12.0" \
+  -F 'extra_params={"sample_solver":"euler"}' -F "seed=42"
 
 # 轮询任务状态，直到 status == completed
 video_id=$(echo "$create_response" | jq -r '.id')

@@ -9,6 +9,8 @@
 # ============================================================
 
 # ---------- 部署推理服务 · vllm serve ----------
+export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
 # 标准 --omni 入口（e2e 测试同款，可选加速参数）
 vllm serve meituan-longcat/LongCat-Image-Edit --omni --port 8092 \
   --cache-backend cache_dit --ulysses-degree 2

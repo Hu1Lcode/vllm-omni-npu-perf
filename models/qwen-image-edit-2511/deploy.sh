@@ -9,7 +9,9 @@
 # ============================================================
 
 # ---------- 部署推理服务 · vllm serve ----------
-vllm serve Qwen/Qwen-Image-Edit-2511 --omni --port 8000
+export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+vllm serve Qwen/Qwen-Image-Edit-2511 --omni --port 8000 --vae-use-slicing --vae-use-tiling
 
 # 注: 官方 Qwen-Image-Edit recipe 仅覆盖基础版（多图变体明确不在 recipe 验证范围内），2511 的 API 形式与基础版一致。
 
@@ -17,9 +19,8 @@ vllm serve Qwen/Qwen-Image-Edit-2511 --omni --port 8000
 curl -s http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"messages":[{"role":"user","content":[
-        {"type":"text","text":"Combine the character with the background scene"},
-        {"type":"image_url","image_url":{"url":"data:image/png;base64,<角色图BASE64>"}},
-        {"type":"image_url","image_url":{"url":"data:image/png;base64,<场景图BASE64>"}}]}],
-      "extra_body":{"height":1024,"width":1024,"num_inference_steps":50,"guidance_scale":1,"seed":42}}' \
+        {"type":"text","text":"将图中的猫换成小狗"},
+        {"type":"image_url","image_url":{"url":"/home/wjh/vllm-omni-npu-showcase/cat.jpg"}}]}],
+      "extra_body":{"height":1024,"width":1024,"num_inference_steps":40,"true_cfg_scale":4.0,"guidance_scale":1,"seed":42}}' \
   | jq -r '.choices[0].message.content[0].image_url.url' | cut -d',' -f2 | base64 -d > output.png
 

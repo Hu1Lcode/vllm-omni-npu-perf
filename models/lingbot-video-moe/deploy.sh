@@ -9,6 +9,8 @@
 # ============================================================
 
 # ---------- 部署推理服务 · vllm serve ----------
+export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
 CUDA_VISIBLE_DEVICES=0 \
 vllm serve robbyant/lingbot-video-moe-30b-a3b \
   --omni \

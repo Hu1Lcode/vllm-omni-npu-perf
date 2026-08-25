@@ -9,6 +9,8 @@
 # ============================================================
 
 # ---------- 部署推理服务 · vllm serve ----------
+export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
 # one-stage 文生/图生视频（含同步音频）
 vllm serve diffusers/LTX-2.3-Diffusers --omni --stage-init-timeout 600
 

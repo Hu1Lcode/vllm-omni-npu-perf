@@ -9,6 +9,8 @@
 # ============================================================
 
 # ---------- 部署推理服务 · vllm serve ----------
+export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
 vllm serve Tongyi-MAI/Z-Image-Turbo --omni --port 8000
 
 # 注意：num_heads=30，仅支持 tensor_parallel_size=2

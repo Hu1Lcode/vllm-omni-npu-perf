@@ -9,6 +9,8 @@
 # ============================================================
 
 # ---------- 部署推理服务 · vllm serve ----------
+export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
 # 5B 稠密模型，单卡即可启动
 vllm serve Wan-AI/Wan2.2-TI2V-5B-Diffusers \
   --omni --port 8091
@@ -16,12 +18,11 @@ vllm serve Wan-AI/Wan2.2-TI2V-5B-Diffusers \
 # ---------- 客户端调用 · /v1/videos（图生视频示例） ----------
 curl -X POST http://localhost:8091/v1/videos \
   -F "prompt=The cat turns its head to look at the camera" \
-  -F "input_reference=@/path/to/cat.png" \
-  -F "width=832" -F "height=480" -F "num_frames=33" -F "fps=16" \
+  -F "input_reference=@/home/wjh/vllm-omni-npu-showcase/cat.jpg" \
+  -F "width=832" -F "height=480" -F "num_frames=81" -F "fps=16" \
   -F "num_inference_steps=40" \
   -F "guidance_scale=1.0" -F "guidance_scale_2=1.0" \
   -F "boundary_ratio=0.875" -F "flow_shift=12.0" \
   -F "seed=42"
 
-# 纯文生视频时省略 input_reference 字段即可；参数以官方文档为准
 

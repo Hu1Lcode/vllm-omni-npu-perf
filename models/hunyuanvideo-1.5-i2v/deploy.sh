@@ -9,6 +9,8 @@
 # ============================================================
 
 # ---------- 部署推理服务 · vllm serve ----------
+export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
 # 480p（默认）
 vllm serve hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-480p_i2v --omni \
   --port 8099 --flow-shift 5.0

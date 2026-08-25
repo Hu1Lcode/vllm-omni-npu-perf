@@ -9,28 +9,36 @@
 # ============================================================
 
 # ---------- 部署推理服务 · vllm serve（8 卡 NPU） ----------
-# 前置依赖：安装 mindie-sd 融合算子库（fused adalayernorm 等，详见官方 NPU recipe）
-#   git clone https://gitcode.com/Ascend/MindIE-SD.git && cd MindIE-SD
-#   python setup.py bdist_wheel && cd dist && pip install mindiesd-*.whl
+export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+export MINDIE_SD_FA_TYPE=ascend_laser_attention 
+export MULTI_STREAM_MEMORY_REUSE=2
+# 基础启动（单卡）
+vllm serve Wan-AI/Wan2.2-I2V-A14B-Diffusers \
+  --omni --port 8091 \
+  --boundary-ratio 0.900 \
+  --flow-shift 5.0
 
-# 蒸馏版（无 CFG）· 8 卡 NPU
-export MINDIE_SD_FA_TYPE=ascend_laser_attention   # Laser Attention，720P 约 40% 加速
-export MULTI_STREAM_MEMORY_REUSE=2                # HSDP/FSDP2 所需的 NPU workaround
-vllm serve --omni Wan-AI/Wan2.2-I2V-A14B-Diffusers \
-  --use-hsdp --usp 8 \
+# hsdpsp8la hsdpsp4cfg2la
+vllm serve Wan-AI/Wan2.2-I2V-A14B-Diffusers \
+  --port 8091 \
+  --omni --use-hsdp --usp 4 --cfg-parallel-size 2 \
   --vae-patch-parallel-size 8 --vae-use-tiling
 
-# 官方模型（含 CFG）：--usp 4 --cfg-parallel-size 2（usp × cfg = 8 卡）
-
 # ---------- 客户端调用 · /v1/videos（图生视频） ----------
+# 创建视频生成任务
 curl -X POST http://localhost:8091/v1/videos \
-  -F "prompt=A bear playing with yarn, smooth motion" \
-  -F "input_reference=@/path/to/qwen-bear.png" \
+  -F "prompt=The cat turns its head to look at the camera" \
+  -F "input_reference=@/home/wjh/vllm-omni-npu-showcase/cat.jpg" \
   -F "width=832" -F "height=480" -F "num_frames=81" -F "fps=16" \
   -F "num_inference_steps=40" \
   -F "guidance_scale=3.5" -F "guidance_scale_2=3.5" \
   -F "boundary_ratio=0.900" -F "flow_shift=5.0" \
   -F 'extra_params={"sample_solver":"euler"}' -F "seed=42"
 
-# 蒸馏/Lightning 权重使用 sample_solver=euler，官方权重默认 unipc
+# 轮询任务状态，直到 status == completed
+video_id=$(echo "$create_response" | jq -r '.id')
+curl -s "http://localhost:8091/v1/videos/${video_id}"
 
+# 下载生成结果
+curl -L "http://localhost:8091/v1/videos/${video_id}/content" -o wan22_t2v_output.mp4

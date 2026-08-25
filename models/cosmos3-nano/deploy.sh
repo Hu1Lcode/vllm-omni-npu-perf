@@ -9,6 +9,8 @@
 # ============================================================
 
 # ---------- 部署推理服务 · vllm serve（GPU / NPU） ----------
+export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
 # 1× GPU（H200 141GB / B300）或 1× NPU（Ascend 910B/910C，Atlas A2/A3）
 vllm serve nvidia/Cosmos3-Nano \
   --omni \

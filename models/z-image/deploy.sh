@@ -9,6 +9,8 @@
 # ============================================================
 
 # ---------- 部署推理服务 · vllm serve ----------
+export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
 vllm serve Tongyi-MAI/Z-Image --omni --port 8091
 
 # 注: NPU 支持状态待验证，建议优先使用官方矩阵列出的 Z-Image-Turbo。

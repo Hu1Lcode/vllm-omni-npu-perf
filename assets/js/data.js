@@ -33,17 +33,26 @@ window.MODELS = [
         <p>数据流：文本提示词 → 文本编码器 → DiT 去噪 → VAE 解码 → 视频帧。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve",
         lang: "bash",
-        code: `# 基础启动
-vllm serve Wan-AI/Wan2.1-T2V-1.3B-Diffusers --omni --port 8091
+        code: `export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
 
-# VAE 并行示例（官方 VAE 并行文档）
+# 基础启动
+vllm serve Wan-AI/Wan2.1-T2V-1.3B-Diffusers \\
+  --omni --port 8091
+
+# cfg2tp2sp2 cfg2sp4
 vllm serve Wan-AI/Wan2.1-T2V-1.3B-Diffusers --omni \\
+  --port 8091 \\
   --tensor-parallel-size 2 \\
-  --vae-patch-parallel-size 2 \\
+  --usp 4 \\
+  --ring 1\\
+  --cfg-parallel-size 2 \\
+  --vae-use-tiling \\
+  --vae-patch-parallel-size 8 \\
   --vae-parallel-mode spatial_shard_width`,
         note: "官方在线服务示例页的完整命令以 Wan2.2 为例，Wan2.1 使用同一 WanPipeline 入口；参数以官方文档为准。",
       },
@@ -52,13 +61,13 @@ vllm serve Wan-AI/Wan2.1-T2V-1.3B-Diffusers --omni \\
         lang: "bash",
         code: `curl -X POST http://localhost:8091/v1/videos \\
   -F "prompt=A cinematic view of a futuristic city at sunset" \\
-  -F "width=832" -F "height=480" -F "num_frames=33" -F "fps=16" \\
+  -F "width=832" -F "height=480" -F "num_frames=81" -F "fps=16" \\
   -F "negative_prompt=low quality, blurry, static" \\
   -F "num_inference_steps=40" -F "guidance_scale=5.0" \\
   -F "flow_shift=5.0" -F "seed=42"
 
 # 创建后轮询 GET /v1/videos/{id} 至 completed，再下载
-#   curl -L http://localhost:8091/v1/videos/{id}/content -o out.mp4`,
+   curl -L http://localhost:8091/v1/videos/{id}/content -o out.mp4`,
       },
     ],
     perf: {
@@ -95,12 +104,27 @@ vllm serve Wan-AI/Wan2.1-T2V-1.3B-Diffusers --omni \\
         <p>数据流：文本提示词 → 文本编码器 → DiT 去噪 → VAE 解码 → 视频帧。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve",
         lang: "bash",
-        code: `# 基础启动
-vllm serve Wan-AI/Wan2.1-T2V-14B-Diffusers --omni --port 8091
+        code: `export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+
+# 基础启动
+vllm serve Wan-AI/Wan2.1-T2V-14B-Diffusers \\
+  --omni --port 8091
+
+# cfg2tp2sp2 cfg2sp4
+vllm serve Wan-AI/Wan2.1-T2V-14B-Diffusers --omni \\
+  --port 8091 \\
+  --tensor-parallel-size 2 \\
+  --usp 4 \\
+  --ring 1\\
+  --cfg-parallel-size 2 \\
+  --vae-use-tiling \\
+  --vae-patch-parallel-size 8 \\
+  --vae-parallel-mode spatial_shard_width
 
 # 显存受限时可追加逐层卸载
 #   --enable-layerwise-offload`,
@@ -111,13 +135,13 @@ vllm serve Wan-AI/Wan2.1-T2V-14B-Diffusers --omni --port 8091
         lang: "bash",
         code: `curl -X POST http://localhost:8091/v1/videos \\
   -F "prompt=A cinematic view of a futuristic city at sunset" \\
-  -F "width=832" -F "height=480" -F "num_frames=33" -F "fps=16" \\
+  -F "width=832" -F "height=480" -F "num_frames=81" -F "fps=16" \\
   -F "negative_prompt=low quality, blurry, static" \\
   -F "num_inference_steps=40" -F "guidance_scale=5.0" \\
   -F "flow_shift=5.0" -F "seed=42"
 
 # 创建后轮询 GET /v1/videos/{id} 至 completed，再下载
-#   curl -L http://localhost:8091/v1/videos/{id}/content -o out.mp4`,
+  curl -L http://localhost:8091/v1/videos/{id}/content -o out.mp4`,
       },
     ],
     perf: {
@@ -153,29 +177,44 @@ vllm serve Wan-AI/Wan2.1-T2V-14B-Diffusers --omni --port 8091
         <p>数据流：参考图像（VAE 编码）+ 文本提示词 → DiT 去噪 → VAE 解码 → 视频帧。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve",
         lang: "bash",
-        code: `# 基础启动（HF 仓库）
+        code: `export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+# 基础启动（HF 仓库）
 vllm serve Wan-AI/Wan2.1-I2V-14B-480P --omni --port 8091
 
-# 多卡示例（tp2sp2cfg2，参照本地实测）
-vllm serve /path/to/Wan2.1-I2V-14B-480P --omni \\
+# 基础启动
+vllm serve Wan-AI/Wan2.1-I2V-14B-480P-Diffusers \\
+  --omni --port 8091
+
+# cfg2tp2sp2 cfg2sp4
+vllm serve Wan-AI/Wan2.1-I2V-14B-480P-Diffusers --omni \\
   --port 8091 \\
-  --usp 2 --cfg-parallel-size 2 \\
-  --vae-patch-parallel-size 8 --vae-use-tiling`,
+  --tensor-parallel-size 2 \\
+  --usp 4 \\
+  --ring 1\\
+  --cfg-parallel-size 2 \\
+  --vae-use-tiling \\
+  --vae-patch-parallel-size 8 \\
+  --vae-parallel-mode spatial_shard_width`,
         note: "官方文档未提供 Wan2.1-I2V 的 serve 示例（矩阵未列出），命令参照 Wan2.1-T2V 模式；参数以本地实测为准，可直接编辑 scripts/wan21-i2v-480p.sh 同步页面。",
       },
       {
-        title: "客户端调用 · /v1/videos（图生视频）",
+        title: "客户端调用 · /v1/videos（异步任务）",
         lang: "bash",
         code: `curl -X POST http://localhost:8091/v1/videos \\
   -F "prompt=The cat turns its head to look at the camera" \\
-  -F "input_reference=@/path/to/reference.png" \\
-  -F "width=832" -F "height=480" -F "num_frames=33" -F "fps=16" \\
+  -F "input_reference=@/home/wjh/vllm-omni-npu-showcase/cat.jpg" \\
+  -F "width=832" -F "height=480" -F "num_frames=81" -F "fps=16" \\
+  -F "negative_prompt=low quality, blurry, static" \\
   -F "num_inference_steps=40" -F "guidance_scale=5.0" \\
-  -F "flow_shift=5.0" -F "seed=42"`,
+  -F "flow_shift=5.0" -F "seed=42"
+
+# 创建后轮询 GET /v1/videos/{id} 至 completed，再下载
+   curl -L http://localhost:8091/v1/videos/{id}/content -o out.mp4`,
       },
     ],
     perf: {
@@ -211,18 +250,27 @@ vllm serve /path/to/Wan2.1-I2V-14B-480P --omni \\
         <p>数据流：参考图像（VAE 编码）+ 文本提示词 → DiT 去噪 → VAE 解码 → 视频帧。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve",
         lang: "bash",
-        code: `# 基础启动（HF 仓库）
-vllm serve Wan-AI/Wan2.1-I2V-14B-720P --omni --port 8091
+        code: `export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
 
-# 多卡示例（tp2sp2cfg2，参照本地实测）
-vllm serve /path/to/Wan2.1-I2V-14B-720P --omni \\
+# 基础启动
+vllm serve Wan-AI/Wan2.1-I2V-14B-720P-Diffusers \\
+  --omni --port 8091
+
+# cfg2tp2sp2 cfg2sp4
+vllm serve Wan-AI/Wan2.1-I2V-14B-720P-Diffusers --omni \\
   --port 8091 \\
-  --usp 2 --cfg-parallel-size 2 \\
-  --vae-patch-parallel-size 8 --vae-use-tiling`,
+  --tensor-parallel-size 2 \\
+  --usp 4 \\
+  --ring 1\\
+  --cfg-parallel-size 2 \\
+  --vae-use-tiling \\
+  --vae-patch-parallel-size 8 \\
+  --vae-parallel-mode spatial_shard_width`,
         note: "官方文档未提供 Wan2.1-I2V 的 serve 示例（矩阵未列出），命令参照 Wan2.1-T2V 模式；参数以本地实测为准，可直接编辑 scripts/wan21-i2v-720p.sh 同步页面。",
       },
       {
@@ -230,10 +278,14 @@ vllm serve /path/to/Wan2.1-I2V-14B-720P --omni \\
         lang: "bash",
         code: `curl -X POST http://localhost:8091/v1/videos \\
   -F "prompt=The cat turns its head to look at the camera" \\
-  -F "input_reference=@/path/to/reference.png" \\
-  -F "width=1280" -F "height=720" -F "num_frames=33" -F "fps=16" \\
+  -F "input_reference=@/home/wjh/vllm-omni-npu-showcase/cat.jpg" \\
+  -F "width=1280" -F "height=720" -F "num_frames=81" -F "fps=16" \\
+  -F "negative_prompt=low quality, blurry, static" \\
   -F "num_inference_steps=40" -F "guidance_scale=5.0" \\
-  -F "flow_shift=5.0" -F "seed=42"`,
+  -F "flow_shift=5.0" -F "seed=42"
+
+# 创建后轮询 GET /v1/videos/{id} 至 completed，再下载
+   curl -L http://localhost:8091/v1/videos/{id}/content -o out.mp4`,
       },
     ],
     perf: {
@@ -271,32 +323,37 @@ vllm serve /path/to/Wan2.1-I2V-14B-720P --omni \\
         <p>数据流：文本提示词 → 文本编码器 → 高噪声 DiT（CFG）→ 低噪声 DiT → VAE 解码 → 视频帧。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve",
         lang: "bash",
-        code: `# 基础启动（单卡）
+        code: `export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+export MINDIE_SD_FA_TYPE=ascend_laser_attention 
+export MULTI_STREAM_MEMORY_REUSE=2
+# 基础启动（单卡）
 vllm serve Wan-AI/Wan2.2-T2V-A14B-Diffusers \\
   --omni --port 8091 \\
   --boundary-ratio 0.875 \\
-  --flow-shift 5.0
+  --flow-shift 12.0
 
-# 8 卡 NPU：HSDP + VAE patch 并行 + tiling
+# hsdpsp8la hsdpsp4cfg2la
 vllm serve Wan-AI/Wan2.2-T2V-A14B-Diffusers \\
-  --omni --use-hsdp --usp 8 \\
+  --port 8091 \\
+  --omni --use-hsdp --usp 4 --cfg-parallel-size 2 \\
   --vae-patch-parallel-size 8 --vae-use-tiling`,
       },
       {
         title: "客户端调用 · /v1/videos（异步任务）",
         lang: "bash",
         code: `# 创建视频生成任务
-create_response=$(curl -s http://localhost:8091/v1/videos \\
-  -H "Accept: application/json" \\
-  -F "prompt=Two anthropomorphic cats in comfy boxing gear and bright gloves fight intensely on a spotlighted stage." \\
-  -F "width=832" -F "height=480" -F "num_frames=33" -F "fps=16" \\
+curl -X POST http://localhost:8091/v1/videos \\
+  -F "prompt=A cinematic view of a futuristic city at sunset" \\
+  -F "width=832" -F "height=480" -F "num_frames=81" -F "fps=16" \\
   -F "num_inference_steps=40" \\
-  -F "guidance_scale=4.0" -F "guidance_scale_2=4.0" \\
-  -F "boundary_ratio=0.875" -F "flow_shift=5.0" -F "seed=42")
+  -F "guidance_scale=3.0" -F "guidance_scale_2=4.0" \\
+  -F "boundary_ratio=0.875" -F "flow_shift=12.0" \\
+  -F 'extra_params={"sample_solver":"euler"}' -F "seed=42"
 
 # 轮询任务状态，直到 status == completed
 video_id=$(echo "$create_response" | jq -r '.id')
@@ -341,36 +398,45 @@ curl -L "http://localhost:8091/v1/videos/\${video_id}/content" -o wan22_t2v_outp
         <p>数据流：参考图像（VAE 编码）+ 文本提示词 → 高噪声 DiT → 低噪声 DiT → VAE 解码 → 视频帧。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve（8 卡 NPU）",
         lang: "bash",
-        code: `# 前置依赖：安装 mindie-sd 融合算子库（fused adalayernorm 等，详见官方 NPU recipe）
-#   git clone https://gitcode.com/Ascend/MindIE-SD.git && cd MindIE-SD
-#   python setup.py bdist_wheel && cd dist && pip install mindiesd-*.whl
+        code: `export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+export MINDIE_SD_FA_TYPE=ascend_laser_attention 
+export MULTI_STREAM_MEMORY_REUSE=2
+# 基础启动（单卡）
+vllm serve Wan-AI/Wan2.2-I2V-A14B-Diffusers \\
+  --omni --port 8091 \\
+  --boundary-ratio 0.900 \\
+  --flow-shift 5.0
 
-# 蒸馏版（无 CFG）· 8 卡 NPU
-export MINDIE_SD_FA_TYPE=ascend_laser_attention   # Laser Attention，720P 约 40% 加速
-export MULTI_STREAM_MEMORY_REUSE=2                # HSDP/FSDP2 所需的 NPU workaround
-vllm serve --omni Wan-AI/Wan2.2-I2V-A14B-Diffusers \\
-  --use-hsdp --usp 8 \\
-  --vae-patch-parallel-size 8 --vae-use-tiling
-
-# 官方模型（含 CFG）：--usp 4 --cfg-parallel-size 2（usp × cfg = 8 卡）`,
+# hsdpsp8la hsdpsp4cfg2la
+vllm serve Wan-AI/Wan2.2-I2V-A14B-Diffusers \\
+  --port 8091 \\
+  --omni --use-hsdp --usp 4 --cfg-parallel-size 2 \\
+  --vae-patch-parallel-size 8 --vae-use-tiling`,
       },
       {
         title: "客户端调用 · /v1/videos（图生视频）",
         lang: "bash",
-        code: `curl -X POST http://localhost:8091/v1/videos \\
-  -F "prompt=A bear playing with yarn, smooth motion" \\
-  -F "input_reference=@/path/to/qwen-bear.png" \\
-  -F "width=832" -F "height=480" -F "num_frames=33" -F "fps=16" \\
+        code: `# 创建视频生成任务
+curl -X POST http://localhost:8091/v1/videos \\
+  -F "prompt=The cat turns its head to look at the camera" \\
+  -F "input_reference=@/home/wjh/vllm-omni-npu-showcase/cat.jpg" \\
+  -F "width=832" -F "height=480" -F "num_frames=81" -F "fps=16" \\
   -F "num_inference_steps=40" \\
-  -F "guidance_scale=1.0" -F "guidance_scale_2=1.0" \\
-  -F "boundary_ratio=0.875" -F "flow_shift=12.0" \\
+  -F "guidance_scale=3.5" -F "guidance_scale_2=3.5" \\
+  -F "boundary_ratio=0.900" -F "flow_shift=5.0" \\
   -F 'extra_params={"sample_solver":"euler"}' -F "seed=42"
 
-# 蒸馏/Lightning 权重使用 sample_solver=euler，官方权重默认 unipc`,
+# 轮询任务状态，直到 status == completed
+video_id=$(echo "$create_response" | jq -r '.id')
+curl -s "http://localhost:8091/v1/videos/\${video_id}"
+
+# 下载生成结果
+curl -L "http://localhost:8091/v1/videos/\${video_id}/content" -o wan22_t2v_output.mp4`,
       },
     ],
     perf: {
@@ -407,11 +473,13 @@ vllm serve --omni Wan-AI/Wan2.2-I2V-A14B-Diffusers \\
         <p>数据流：文本提示词（+ 可选参考图像）→ DiT → VAE 解码 → 视频帧。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve",
         lang: "bash",
-        code: `# 5B 稠密模型，单卡即可启动
+        code: `export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+# 5B 稠密模型，单卡即可启动
 vllm serve Wan-AI/Wan2.2-TI2V-5B-Diffusers \\
   --omni --port 8091`,
       },
@@ -420,14 +488,12 @@ vllm serve Wan-AI/Wan2.2-TI2V-5B-Diffusers \\
         lang: "bash",
         code: `curl -X POST http://localhost:8091/v1/videos \\
   -F "prompt=The cat turns its head to look at the camera" \\
-  -F "input_reference=@/path/to/cat.png" \\
-  -F "width=832" -F "height=480" -F "num_frames=33" -F "fps=16" \\
+  -F "input_reference=@/home/wjh/vllm-omni-npu-showcase/cat.jpg" \\
+  -F "width=832" -F "height=480" -F "num_frames=81" -F "fps=16" \\
   -F "num_inference_steps=40" \\
   -F "guidance_scale=1.0" -F "guidance_scale_2=1.0" \\
   -F "boundary_ratio=0.875" -F "flow_shift=12.0" \\
-  -F "seed=42"
-
-# 纯文生视频时省略 input_reference 字段即可；参数以官方文档为准`,
+  -F "seed=42"`,
       },
     ],
     perf: {
@@ -465,7 +531,7 @@ vllm serve Wan-AI/Wan2.2-TI2V-5B-Diffusers \\
         <p>数据流：文本/图像/视频/音频参考 → Qwen3-VL 编码器 → FL2VA 或 Ref2VA DiT → 视频 VAE 解码 + 音频 VAE 解码 → 音画同步 MP4。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve（8 卡 NPU · Atlas 800I A3）",
         lang: "bash",
@@ -473,38 +539,42 @@ vllm serve Wan-AI/Wan2.2-TI2V-5B-Diffusers \\
 # 环境：Atlas 800I A3 · CANN 9.0.1 · torch_npu 2.10.0.post2 · 768P
 # 模型需 HuggingFace 授权：hf auth login
 
-export ASCEND_RT_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-export VLLM_WORKER_MULTIPROC_METHOD=spawn
-export VLLM_OMNI_VIDEO_SYNC_TIMEOUT=1800
-export PYTHONDONTWRITEBYTECODE=1
+export ASCEND_RT_VISIBLE_DEVICES=4,5,6,7,8,9,10,11
+export VLLM_WORKER_MULTIPROC_METHOD=spawn 
+export VLLM_OMNI_VIDEO_SYNC_TIMEOUT=1800 
+export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+# export MINDIE_SD_FA_TYPE=ascend_laser_attention
 
-vllm serve MiniMaxAI/MiniMax-H3 \\
+vllm serve /home/wjh/models/MiniMax-H3/FL2VA \\
   --omni \\
   --host 0.0.0.0 \\
-  --port 9098 \\
+  --port 8989 \\
   --trust-remote-code \\
   --num-gpus 8 \\
+  --init-timeout 1800 \\
+  --stage-init-timeout 1800 \\
+  --use-hsdp \\
+  --hsdp-shard-size 8 \\
   --usp 8 \\
   --ring 1 \\
   --text-encoder-tp-size 8 \\
-  --enable-distributed-layerwise-offload \\
-  --vae-parallel-mode tile \\
-  --vae-use-tiling \\
   --vae-patch-parallel-size 8 \\
-  --diffusion-attention-backend FLASH_ATTN`,
+  --vae-parallel-mode tile \\
+  --vae-use-tiling`,
         note: "可选优化：--diffusion-attention-backend RAINFUSION_ATTN（保持 --ring 1）、export MINDIE_SD_FA_TYPE=ascend_laser_attention、T2VA 可用 --quantization int8；HSDP 需配合 export MULTI_STREAM_MEMORY_REUSE=2。注意：不要加 --enforce-eager（regional compile 会在首个请求时预热）；CFG 已蒸馏，--cfg-parallel-size 必须保持 1。",
       },
       {
         title: "客户端调用 · /v1/videos/sync（t2va / fl2va / ref2va）",
         lang: "bash",
-        code: `export API_URL="http://127.0.0.1:9098/v1/videos/sync"
+        code: `export API_URL="http://127.0.0.1:8000/v1/videos/sync"
 
 # T2VA（文生视频+音频）
 curl -sS -X POST "\${API_URL}" \\
   -F 'prompt=In a snowy blue-purple forest, Ori carefully walks past a sleeping giant; footsteps crunch in the snow while the creature breathes and softly snorts.' \\
   -F 'width=1344' -F 'height=768' -F 'aspect_ratio=16:9' -F 'fps=24' \\
   -F 'num_inference_steps=50' -F 'flow_shift=12' -F 'seed=1101' \\
-  -F 'extra_params={"task":"t2va","duration":8.7,"audio_flow_shift":3.0}' \\
+  -F 'extra_params={"task":"t2va","duration":5,"audio_flow_shift":3.0}' \\
   -o t2va.mp4
 
 # FL2VA（首帧驱动）：先 export FIRST_FRAME=/path/to/first_frame.png
@@ -563,17 +633,16 @@ curl -sS -X POST "\${API_URL}" \\
         <p>数据流：文本提示词 → 文本编码器 → DiT 去噪 → VAE 解码 → 图像。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve",
         lang: "bash",
-        code: `vllm serve Qwen/Qwen-Image-2512 --omni --port 8091
+        code: `export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+vllm serve Qwen/Qwen-Image-2512 --omni --port 8091 --vae-use-slicing --vae-use-tiling
 
 # 逐步连续批处理（step-wise continuous batching）
-#   --step-execution --max-num-seqs 8
-
-# 显存受限时追加
-#   --vae-use-slicing --vae-use-tiling`,
+#   --step-execution --max-num-seqs 8`,
       },
       {
         title: "客户端调用 · /v1/images/generations",
@@ -582,9 +651,9 @@ curl -sS -X POST "\${API_URL}" \\
   -H "Content-Type: application/json" \\
   -d '{
     "model": "Qwen/Qwen-Image-2512",
-    "prompt": "A ceramic teapot on a wooden table",
+    "prompt": "A cinematic view of a futuristic city at sunset",
     "size": "1024x1024",
-    "num_inference_steps": 20,
+    "num_inference_steps": 50,
     "seed": 42
   }' \\
   | jq -r '.data[0].b64_json' | base64 -d > teapot.png`,
@@ -625,11 +694,13 @@ curl -sS -X POST "\${API_URL}" \\
         <p>数据流：多张参考图像（VAE 编码）+ 文本指令 → DiT → VAE 解码 → 编辑图像。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve",
         lang: "bash",
-        code: `vllm serve Qwen/Qwen-Image-Edit-2511 --omni --port 8000`,
+        code: `export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+vllm serve Qwen/Qwen-Image-Edit-2511 --omni --port 8000 --vae-use-slicing --vae-use-tiling`,
         note: "官方 Qwen-Image-Edit recipe 仅覆盖基础版（多图变体明确不在 recipe 验证范围内），2511 的 API 形式与基础版一致。",
       },
       {
@@ -638,10 +709,9 @@ curl -sS -X POST "\${API_URL}" \\
         code: `curl -s http://localhost:8000/v1/chat/completions \\
   -H "Content-Type: application/json" \\
   -d '{"messages":[{"role":"user","content":[
-        {"type":"text","text":"Combine the character with the background scene"},
-        {"type":"image_url","image_url":{"url":"data:image/png;base64,<角色图BASE64>"}},
-        {"type":"image_url","image_url":{"url":"data:image/png;base64,<场景图BASE64>"}}]}],
-      "extra_body":{"height":1024,"width":1024,"num_inference_steps":50,"guidance_scale":1,"seed":42}}' \\
+        {"type":"text","text":"将图中的猫换成小狗"},
+        {"type":"image_url","image_url":{"url":"/home/wjh/vllm-omni-npu-showcase/cat.jpg"}}]}],
+      "extra_body":{"height":1024,"width":1024,"num_inference_steps":40,"true_cfg_scale":4.0,"guidance_scale":1,"seed":42}}' \\
   | jq -r '.choices[0].message.content[0].image_url.url' | cut -d',' -f2 | base64 -d > output.png`,
       },
     ],
@@ -678,11 +748,17 @@ curl -sS -X POST "\${API_URL}" \\
         <p>数据流：输入图像（VAE 编码）→ DiT → 多层 RGBA → VAE 解码 → 各层透明 PNG。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve",
         lang: "bash",
-        code: `vllm serve Qwen/Qwen-Image-Layered --omni --port 8093`,
+        code: `export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+vllm serve /data/models/Qwen-Image-Layered \\
+     --vae-parallel-mode tile \\
+     --vae-use-tiling \\
+     --omni \\
+     --port 8094`,
       },
       {
         title: "客户端调用 · /v1/chat/completions（图层分解）",
@@ -732,11 +808,13 @@ curl -sS -X POST "\${API_URL}" \\
         <p>数据流：文本提示词 → 文本编码器 → DiT 去噪 → VAE 解码 → 图像。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve",
         lang: "bash",
-        code: `vllm serve Tongyi-MAI/Z-Image --omni --port 8091`,
+        code: `export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+vllm serve Tongyi-MAI/Z-Image --omni --port 8091`,
         note: "NPU 支持状态待验证，建议优先使用官方矩阵列出的 Z-Image-Turbo。",
       },
       {
@@ -781,11 +859,13 @@ curl -sS -X POST "\${API_URL}" \\
         <p>数据流：文本提示词 → 文本编码器 → DiT 去噪（4~9 步）→ VAE 解码 → 图像。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve",
         lang: "bash",
-        code: `vllm serve Tongyi-MAI/Z-Image-Turbo --omni --port 8000
+        code: `export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+vllm serve Tongyi-MAI/Z-Image-Turbo --omni --port 8000
 
 # 注意：num_heads=30，仅支持 tensor_parallel_size=2`,
       },
@@ -834,11 +914,13 @@ curl -sS -X POST "\${API_URL}" \\
         <p>数据流：文本（+ 可选参考图）→ 文本编码器 → Transformer 去噪 → 视频 VAE 解码 + 音频 Vocoder → 音画同步视频。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve",
         lang: "bash",
-        code: `# one-stage 文生/图生视频（含同步音频）
+        code: `export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+# one-stage 文生/图生视频（含同步音频）
 vllm serve diffusers/LTX-2.3-Diffusers --omni --stage-init-timeout 600
 
 # 两阶段（普通，含上采样器）
@@ -911,11 +993,13 @@ curl -X POST http://localhost:8000/v1/videos/sync \\
         <p>数据流：文本（+ 可选参考图）→ Qwen3-VL 编码 → DiT → Wan VAE 解码 → 图像 / 视频。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve",
         lang: "bash",
-        code: `CUDA_VISIBLE_DEVICES=0 \\
+        code: `export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+CUDA_VISIBLE_DEVICES=0 \\
 vllm serve robbyant/lingbot-video-dense-1.3b \\
   --omni \\
   --model-class-name LingBotVideoPipeline \\
@@ -980,11 +1064,13 @@ curl -L "http://localhost:8091/v1/videos/\${video_id}/content" -o lingbot_t2v.mp
         <p>数据流：文本（+ 可选参考图）→ Qwen3-VL 编码 → MoE DiT → Wan VAE 解码 → 图像 / 视频。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve",
         lang: "bash",
-        code: `CUDA_VISIBLE_DEVICES=0 \\
+        code: `export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+CUDA_VISIBLE_DEVICES=0 \\
 vllm serve robbyant/lingbot-video-moe-30b-a3b \\
   --omni \\
   --model-class-name LingBotVideoPipeline \\
@@ -1050,11 +1136,13 @@ curl -L "http://localhost:8091/v1/videos/\${video_id}/content" -o lingbot_moe_t2
         <p>数据流：文本提示词 → 文本编码器 → DiT 去噪 → VAE 解码 → 图像。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve",
         lang: "bash",
-        code: `# 标准 --omni 入口（官方暂无专属 serve 文档）
+        code: `export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+# 标准 --omni 入口（官方暂无专属 serve 文档）
 vllm serve meituan-longcat/LongCat-Image --omni --port 8091`,
         note: "官方未提供该模型的专属 serve 命令与 NPU 专项说明；支持状态以官方矩阵（NPU ✓）为准，参数以官方文档为准。",
       },
@@ -1100,11 +1188,13 @@ vllm serve meituan-longcat/LongCat-Image --omni --port 8091`,
         <p>数据流：参考图像（VAE 编码）+ 文本指令 → DiT → VAE 解码 → 编辑后图像。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve",
         lang: "bash",
-        code: `# 标准 --omni 入口（e2e 测试同款，可选加速参数）
+        code: `export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+# 标准 --omni 入口（e2e 测试同款，可选加速参数）
 vllm serve meituan-longcat/LongCat-Image-Edit --omni --port 8092 \\
   --cache-backend cache_dit --ulysses-degree 2
 
@@ -1174,11 +1264,13 @@ vllm serve meituan-longcat/LongCat-Image-Edit --omni --port 8092 \\
         <p>数据流：文本提示词 → 文本编码器 → DiT 去噪 → VAE 解码 → 视频帧。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve",
         lang: "bash",
-        code: `# 480p（默认）
+        code: `export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+# 480p（默认）
 vllm serve hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-480p_t2v --omni \\
   --port 8098 --flow-shift 5.0
 
@@ -1234,11 +1326,13 @@ vllm serve hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-720p_t2v --omni \\
         <p>数据流：参考图像（VAE 编码）+ 文本提示词 → DiT 去噪 → VAE 解码 → 视频帧。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve",
         lang: "bash",
-        code: `# 480p（默认）
+        code: `export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+# 480p（默认）
 vllm serve hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-480p_i2v --omni \\
   --port 8099 --flow-shift 5.0
 
@@ -1297,11 +1391,13 @@ vllm serve hunyuanvideo-community/HunyuanVideo-1.5-Diffusers-720p_i2v --omni \\
         <p>数据流：文本/图像/视频输入 → Qwen3-VL 编码（UND）→ GEN 交叉注意力去噪 → Wan VAE 解码（+ 音频生成）→ 输出。</p>
       `,
     },
-    serve: [
+        serve: [
       {
         title: "部署推理服务 · vllm serve（GPU / NPU）",
         lang: "bash",
-        code: `# 1× GPU（H200 141GB / B300）或 1× NPU（Ascend 910B/910C，Atlas A2/A3）
+        code: `export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
+export TASK_QUEUE_ENABLE=2
+# 1× GPU（H200 141GB / B300）或 1× NPU（Ascend 910B/910C，Atlas A2/A3）
 vllm serve nvidia/Cosmos3-Nano \\
   --omni \\
   --host 0.0.0.0 --port 8000 \\
