@@ -11,23 +11,23 @@
 # ---------- 部署推理服务 · vllm serve ----------
 export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
 export TASK_QUEUE_ENABLE=2
-CUDA_VISIBLE_DEVICES=0 \
-vllm serve robbyant/lingbot-video-dense-1.3b \
+
+vllm serve /mnt/sfs_turbo/wjh/lingbot-video-dense-1.3b \
   --omni \
   --model-class-name LingBotVideoPipeline \
   --default-sampling-params \
   '{"0":{"num_frames":81,"num_inference_steps":40,"guidance_scale":6.0}}' \
-  --port 8091
+  --port 12580
 
 # 注: 官方 recipe 仅验证 CUDA 单卡路径；多卡并行、Cache-DiT、量化、CPU 卸载未验证。官方矩阵未列入 NPU。
 
 # ---------- 客户端调用 · /v1/videos（异步任务，仅 T2V） ----------
-create_response=$(curl -s http://localhost:8091/v1/videos \
-  -F "model=robbyant/lingbot-video-dense-1.3b" \
+curl -s http://localhost:12580/v1/videos \
+  -F "model=/mnt/sfs_turbo/wjh/lingbot-video-dense-1.3b" \
   -F "prompt=a robotic arm picks up a red block" \
-  -F "width=320" -F "height=192" -F "num_frames=9" -F "fps=24" \
-  -F "num_inference_steps=2" -F "guidance_scale=3.0" -F "flow_shift=3.0" \
-  -F "seed=42")
+  -F "width=832" -F "height=480" -F "num_frames=121" -F "fps=24" \
+  -F "num_inference_steps=40" -F "guidance_scale=3.0" -F "flow_shift=3.0" \
+  -F "seed=42"
 
 video_id=$(echo "$create_response" | jq -r '.id')
 while true; do

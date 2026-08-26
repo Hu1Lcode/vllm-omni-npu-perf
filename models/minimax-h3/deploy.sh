@@ -14,11 +14,12 @@
 # 模型需 HuggingFace 授权：hf auth login
 
 export ASCEND_RT_VISIBLE_DEVICES=4,5,6,7,8,9,10,11
+# export MINDIE_SD_FA_TYPE=ascend_laser_attention
+
 export VLLM_WORKER_MULTIPROC_METHOD=spawn 
 export VLLM_OMNI_VIDEO_SYNC_TIMEOUT=1800 
 export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
 export TASK_QUEUE_ENABLE=2
-# export MINDIE_SD_FA_TYPE=ascend_laser_attention
 
 vllm serve /home/wjh/models/MiniMax-H3/FL2VA \
   --omni \

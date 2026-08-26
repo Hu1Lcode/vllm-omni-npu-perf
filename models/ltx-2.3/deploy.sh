@@ -14,35 +14,33 @@ export TASK_QUEUE_ENABLE=2
 # one-stage 文生/图生视频（含同步音频）
 vllm serve diffusers/LTX-2.3-Diffusers --omni --stage-init-timeout 600
 
-# 两阶段（普通，含上采样器）
+# 两阶段 fsdpcfg2sp4
 vllm serve diffusers/LTX-2.3-Diffusers --omni \
-  --model-class-name LTX2TwoStagePipeline \
-  --enable-layerwise-offload \
+  --port 12580 \
+  --use-hsdp \
+  --cfg-parallel-size 2 \
+  --usp 4 \
+  --ring 1\
+  --vae-use-tiling \
+  --vae-patch-parallel-size 8 \
+  --vae-parallel-mode spatial_shard_width \
   --stage-init-timeout 600
-
-# 两阶段（全蒸馏；LTX2DistilledPipeline 为已废弃别名）
-vllm serve diffusers/LTX-2.3-Distilled-Diffusers --omni \
-  --model-class-name LTX2DistilledTwoStagePipeline --stage-init-timeout 600
-
-# CFG 并行（2 卡）
-vllm serve diffusers/LTX-2.3-Diffusers --omni \
-  --cfg-parallel-size 2 --stage-init-timeout 600
 
 # 注: 建议 96GB 级 GPU，或使用 CPU/逐层卸载；num_frames 需为 8k+1，两阶段管线尺寸需被 64 整除。官方矩阵未列入 NPU。
 
 # ---------- 客户端调用 · /v1/videos/sync（T2V / I2V） ----------
 # T2V（文生视频）
-curl -X POST http://localhost:8000/v1/videos/sync \
+curl -X POST http://localhost:12580/v1/videos/sync \
   -F "prompt=A cinematic close-up of ocean waves at golden hour." \
   -F "negative_prompt=worst quality, inconsistent motion, blurry, jittery, distorted" \
   -F "size=768x512" -F "num_frames=121" -F "fps=24" -F "seed=42" \
   -o ltx_t2v.mp4
 
 # I2V（恰好一张初始图；URL 引用用 image_reference，不可同时给）
-curl -X POST http://localhost:8000/v1/videos/sync \
-  -F "prompt=A plush toy astronaut gently waving while the camera slowly pushes in." \
+curl -X POST http://localhost:12580/v1/videos/sync \
+  -F "prompt=The cat turns its head to look at the camera" \
   -F "negative_prompt=worst quality, inconsistent motion, blurry, jittery, distorted" \
-  -F "input_reference=@/absolute/path/to/reference.png" \
+  -F "input_reference=@/home/wjh/vllm-omni-npu-showcase/cat.jpg" \
   -F "size=768x512" -F "num_frames=121" -F "fps=24" -F "seed=42" \
   -o ltx_i2v.mp4
 

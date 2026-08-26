@@ -38,5 +38,5 @@ curl -X POST http://localhost:8091/v1/videos \
   -F "flow_shift=5.0" -F "seed=42"
 
 # 创建后轮询 GET /v1/videos/{id} 至 completed，再下载
-   curl -L http://localhost:8091/v1/videos/{id}/content -o out.mp4
+curl -L http://localhost:8091/v1/videos/{id}/content -o out.mp4
 

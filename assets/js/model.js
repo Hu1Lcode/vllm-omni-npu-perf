@@ -40,7 +40,7 @@
 
   /* ---------- 徽章 ---------- */
   function npuBadge(m) {
-    if (m.npu === true) return `<span class="badge badge-npu ok">NPU ✓ ${esc(m.npuNote || "支持")}</span>`;
+    if (m.npu === true) return `<span class="badge badge-npu ok">NPU ✓ ${esc(m.npuNote || "是")}</span>`;
     if (m.npu === "unverified") return `<span class="badge badge-npu warn">NPU ⏳ 待验证</span>`;
     return `<span class="badge badge-npu no">NPU ✗ 暂不支持</span>`;
   }

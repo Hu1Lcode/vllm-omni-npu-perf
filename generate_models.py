@@ -338,7 +338,7 @@ def npu_status_label(model):
             return ""
         return note if note.startswith("（") else f"（{note}）"
     if model["npu"] is True:
-        return "支持" + wrap(model["npuNote"])
+        return "是" + wrap(model["npuNote"])
     elif model["npu"] == "unverified":
         return "待验证" + wrap(model["npuNote"])
     else:

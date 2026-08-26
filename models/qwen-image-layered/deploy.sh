@@ -11,19 +11,48 @@
 # ---------- 部署推理服务 · vllm serve ----------
 export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
 export TASK_QUEUE_ENABLE=2
-vllm serve /data/models/Qwen-Image-Layered \
+vllm serve Qwen/Qwen-Image-Layered \
      --vae-parallel-mode tile \
      --vae-use-tiling \
      --omni \
-     --port 8094
+     --port 8091
 
 # ---------- 客户端调用 · /v1/chat/completions（图层分解） ----------
-curl -s http://localhost:8093/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"messages":[{"role":"user","content":[
-        {"type":"text","text":""},
-        {"type":"image_url","image_url":{"url":"data:image/png;base64,<BASE64>"}}]}],
-      "extra_body":{"height":1024,"width":1024,"layers":4,"resolution":1024,"cfg_scale":4.0,"num_inference_steps":50,"seed":42}}'
+import base64
+import requests
 
-# 响应 content[] 中每个元素对应一层图像（layers 默认 4）
+with open("input.png", "rb") as f:
+    img_b64 = base64.b64encode(f.read()).decode()
+
+payload = {
+    "messages": [{
+        "role": "user",
+        "content": [
+            {"type": "image_url", "image_url": {
+                "url": f"data:image/png;base64,{img_b64}"
+            }},
+            {"type": "text", "text": "a rabbit"},
+        ],
+    }],
+    "extra_body": {
+        "num_inference_steps": 50,
+        "cfg_scale": 4.0,
+        "seed": 0,
+        "layers": 4,
+        "resolution": 640,
+    },
+}
+
+resp = requests.post(
+    "http://localhost:8091/v1/chat/completions",
+    json=payload,
+    timeout=600,
+)
+data = resp.json()
+
+for i, item in enumerate(data["choices"][0]["message"]["content"]):
+    _, b64_data = item["image_url"]["url"].split(",", 1)
+    with open(f"layer_{i}.png", "wb") as f:
+        f.write(base64.b64decode(b64_data))
+
 

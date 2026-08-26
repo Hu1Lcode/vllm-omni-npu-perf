@@ -11,11 +11,13 @@
 # ---------- 部署推理服务 · vllm serve（GPU / NPU） ----------
 export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
 export TASK_QUEUE_ENABLE=2
-# 1× GPU（H200 141GB / B300）或 1× NPU（Ascend 910B/910C，Atlas A2/A3）
-vllm serve nvidia/Cosmos3-Nano \
+# 1× NPU 64G HBM
+vllm serve /mnt/sfs_turbo/wjh/Cosmos3-Nano \
   --omni \
-  --host 0.0.0.0 --port 8000 \
-  --init-timeout 1800
+  --host 0.0.0.0 --port 12315 \
+  --init-timeout 1800 \
+  --no-guardrails \
+  --vae-use-slicing --vae-use-tiling 
 
 # 多卡：GPU 用 --ulysses-degree N 或 --tensor-parallel-size N；NPU 用 --tensor-parallel-size 8
 # 显存优化（仅 GPU）：--enable-layerwise-offload、--quantization fp8（720p 峰值 ~50GB → ~36GB）
@@ -25,7 +27,7 @@ vllm serve nvidia/Cosmos3-Nano \
 
 # ---------- 客户端调用 · /v1/images/generations + /v1/videos/sync ----------
 # T2I（1024x1024，50 步；base64 PNG）
-curl -sS -X POST http://localhost:8000/v1/images/generations \
+curl -sS -X POST http://localhost:12315/v1/images/generations \
   -H "Content-Type: application/json" \
   -d '{
     "model": "nvidia/Cosmos3-Nano",
@@ -36,12 +38,12 @@ curl -sS -X POST http://localhost:8000/v1/images/generations \
   }' | python -c "import sys,json,base64; open('cosmos3_t2i.png','wb').write(base64.b64decode(json.load(sys.stdin)['data'][0]['b64_json']))"
 
 # T2V（1280×720，189 帧 @24fps，35 步）
-curl -sS -X POST http://localhost:8000/v1/videos/sync \
+curl -sS -X POST http://localhost:12315/v1/videos/sync \
   -H "Accept: video/mp4" \
   -F "model=nvidia/Cosmos3-Nano" \
   -F "prompt=A robot arm is cleaning a plate in the kitchen" \
   -F "negative_prompt=blurry, distorted, low quality, jittery, deformed" \
-  -F "size=1280x720" -F "num_frames=189" -F "fps=24" \
+  -F "size=832x480" -F "num_frames=121" -F "fps=24" \
   -F "num_inference_steps=35" -F "guidance_scale=6.0" \
   -F "max_sequence_length=4096" -F "flow_shift=10.0" \
   -F 'extra_params={"use_resolution_template":false,"use_duration_template":false,"guardrails":true}' \
@@ -49,17 +51,17 @@ curl -sS -X POST http://localhost:8000/v1/videos/sync \
   -o cosmos3_t2v.mp4
 
 # I2V（参考图）
-curl -sS -X POST http://localhost:8000/v1/videos/sync \
+curl -sS -X POST http://localhost:12315/v1/videos/sync \
   -H "Accept: video/mp4" \
-  -F "model=nvidia/Cosmos3-Nano" \
-  -F "prompt=The scene comes to life with smooth, natural motion." \
+  -F "model=/mnt/sfs_turbo/wjh/Cosmos3-Nano" \
+  -F "prompt=The cat runs in the park" \
   -F "negative_prompt=blurry, distorted, low quality" \
-  -F "size=1280x720" -F "num_frames=189" -F "fps=24" \
+  -F "size=832x480" -F "num_frames=121" -F "fps=24" \
   -F "num_inference_steps=35" -F "guidance_scale=6.0" \
   -F "max_sequence_length=4096" -F "flow_shift=10.0" \
   -F 'extra_params={"use_resolution_template":false,"use_duration_template":false,"guardrails":true}' \
   -F "seed=1111" \
-  -F "input_reference=@/path/to/reference.jpg;type=image/jpeg" \
+  -F "input_reference=@/home/wjh/vllm-omni-npu-showcase/cat.jpg" \
   -o cosmos3_i2v.mp4
 
 # V2V（参考视频）

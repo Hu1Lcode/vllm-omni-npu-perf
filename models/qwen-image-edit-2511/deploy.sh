@@ -15,8 +15,8 @@ vllm serve Qwen/Qwen-Image-Edit-2511 --omni --port 8000 --vae-use-slicing --vae-
 
 # 注: 官方 Qwen-Image-Edit recipe 仅覆盖基础版（多图变体明确不在 recipe 验证范围内），2511 的 API 形式与基础版一致。
 
-# ---------- 客户端调用 · /v1/chat/completions（多图编辑） ----------
-curl -s http://localhost:8000/v1/chat/completions \
+# ---------- 客户端调用 · /v1/images/edits（图像编辑） ----------
+curl -s http://localhost:8000/v1/images/edits \
   -H "Content-Type: application/json" \
   -d '{"messages":[{"role":"user","content":[
         {"type":"text","text":"将图中的猫换成小狗"},

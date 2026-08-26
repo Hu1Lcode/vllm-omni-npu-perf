@@ -6,7 +6,7 @@
 | 组织 | nvidia |
 | 任务 | 文生图 / 文生视频 / 图生视频 / 视频+音频 |
 | 模型参数量 | 16B（MoE 双通路：UND 理解 + GEN 生成），Qwen3-VL 编码器 + Wan VAE + AVAE 音频 tokenizer |
-| NPU 支持 | 暂不支持（暂不支持） |
+| NPU 支持 | 是 |
 | 模型权重 | [HuggingFace](https://huggingface.co/nvidia/Cosmos3-Nano) · [ModelScope](https://modelscope.cn/models/nv-community/Cosmos3-Nano) |
 
 ## 模型介绍
