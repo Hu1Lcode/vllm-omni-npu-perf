@@ -38,7 +38,7 @@ payload = {
         "num_inference_steps": 50,
         "cfg_scale": 4.0,
         "seed": 0,
-        "layers": 4,
+        "layers": 3,
         "resolution": 640,
     },
 }

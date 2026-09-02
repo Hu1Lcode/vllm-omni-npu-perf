@@ -11,12 +11,11 @@
 # ---------- 部署推理服务 · vllm serve ----------
 export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
 export TASK_QUEUE_ENABLE=2
-
+export ASCEND_RT_VISIBLE_DEVICES=8,9,10,11
 vllm serve /mnt/sfs_turbo/wjh/lingbot-video-dense-1.3b \
   --omni \
+  --usp 4 \
   --model-class-name LingBotVideoPipeline \
-  --default-sampling-params \
-  '{"0":{"num_frames":81,"num_inference_steps":40,"guidance_scale":6.0}}' \
   --port 12580
 
 # 注: 官方 recipe 仅验证 CUDA 单卡路径；多卡并行、Cache-DiT、量化、CPU 卸载未验证。官方矩阵未列入 NPU。
@@ -38,6 +37,3 @@ while true; do
 done
 
 curl -L "http://localhost:8091/v1/videos/${video_id}/content" -o lingbot_t2v.mp4
-
-# 注: 当前官方 recipe 仅支持 T2V（T2I / I2V / TI2V 未实现）；height/width 需为 16 的倍数，num_frames 为 1 或 4n+1。
-

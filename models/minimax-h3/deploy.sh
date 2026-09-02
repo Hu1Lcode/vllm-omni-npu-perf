@@ -13,9 +13,7 @@
 # 环境：Atlas 800I A3 · CANN 9.0.1 · torch_npu 2.10.0.post2 · 768P
 # 模型需 HuggingFace 授权：hf auth login
 
-export ASCEND_RT_VISIBLE_DEVICES=4,5,6,7,8,9,10,11
-# export MINDIE_SD_FA_TYPE=ascend_laser_attention
-
+export ASCEND_RT_VISIBLE_DEVICES=8,9,10,11
 export VLLM_WORKER_MULTIPROC_METHOD=spawn 
 export VLLM_OMNI_VIDEO_SYNC_TIMEOUT=1800 
 export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
@@ -26,15 +24,15 @@ vllm serve /home/wjh/models/MiniMax-H3/FL2VA \
   --host 0.0.0.0 \
   --port 8989 \
   --trust-remote-code \
-  --num-gpus 8 \
+  --num-gpus 4 \
   --init-timeout 1800 \
   --stage-init-timeout 1800 \
   --use-hsdp \
-  --hsdp-shard-size 8 \
-  --usp 8 \
+  --hsdp-shard-size 4 \
+  --usp 4 \
   --ring 1 \
-  --text-encoder-tp-size 8 \
-  --vae-patch-parallel-size 8 \
+  --text-encoder-tp-size 4\
+  --vae-patch-parallel-size 4 \
   --vae-parallel-mode tile \
   --vae-use-tiling
 
@@ -42,7 +40,7 @@ vllm serve /home/wjh/models/MiniMax-H3/FL2VA \
 # 注: 可选优化：--diffusion-attention-backend RAINFUSION_ATTN（保持 --ring 1）、export MINDIE_SD_FA_TYPE=ascend_laser_attention、T2VA 可用 --quantization int8；HSDP 需配合 export MULTI_STREAM_MEMORY_REUSE=2。注意：不要加 --enforce-eager（regional compile 会在首个请求时预热）；CFG 已蒸馏，--cfg-parallel-size 必须保持 1。
 
 # ---------- 客户端调用 · /v1/videos/sync（t2va / fl2va / ref2va） ----------
-export API_URL="http://127.0.0.1:8000/v1/videos/sync"
+export API_URL="http://127.0.0.1:8989/v1/videos/sync"
 
 # T2VA（文生视频+音频）
 curl -sS -X POST "${API_URL}" \
